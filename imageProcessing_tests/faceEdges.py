@@ -15,19 +15,23 @@ img_face = roi_gray.copy() # focus only on the face
 
 # Add a blur to simplify for edge processing ____________________
 img_face = cv.GaussianBlur(img_face, (5,5), 0)
-cv.imshow('blurred image', img_face)
+#cv.imshow('blurred image', img_face)
 
 # Edge detection _________________________________
 edge_img = cv.Canny(image=img_face, threshold1=20, threshold2=120) # Canny Edge Detection
 cv.imshow('Canny Edge Detection', edge_img)
 
-'''
 # Can resize the edge image
 edge_resize = cv.resize(edge_img, (0, 0), fx = 2, fy = 2)
+edge_resize = cv.putText(edge_resize, 'WANTED', org=(50,50), 
+                         fontFace=cv.FONT_HERSHEY_PLAIN, 
+                         fontScale= 5, color=255, thickness=3)
+
 cv.imshow('resized edge image', edge_resize)
+
 print('original size: ' + str(len(edge_img)))
 print('new size:' + str(len(edge_resize)))
-'''
+
 
 cv.waitKey(0)
 cv.destroyAllWindows()
