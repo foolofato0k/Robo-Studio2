@@ -63,7 +63,7 @@ if __name__ == '__main__':
         print("Cannot open camera")
         exit()
      
-     webcam = True
+     webcam = False
      if webcam:
             while True:
                 ret, frame = cap.read()
