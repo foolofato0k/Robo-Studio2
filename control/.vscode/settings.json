@@ -1,0 +1,24 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/william/ws_moveit/install/moveit_task_constructor_core/local/lib/python3.10/dist-packages",
+        "/home/william/ws_moveit/install/moveit_configs_utils/lib/python3.10/site-packages",
+        "/home/william/ws_moveit/install/srdfdom/local/lib/python3.10/dist-packages",
+        "/home/william/ws_moveit/install/moveit_task_constructor_msgs/local/lib/python3.10/dist-packages",
+        "/home/william/ws_moveit/install/launch_param_builder/lib/python3.10/site-packages",
+        "/home/william/ros2_ws/install/sjtu_drone_control/lib/python3.10/site-packages",
+        "/home/william/ros2_ws/install/sjtu_drone_bringup/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/william/ws_moveit/install/moveit_task_constructor_core/local/lib/python3.10/dist-packages",
+        "/home/william/ws_moveit/install/moveit_configs_utils/lib/python3.10/site-packages",
+        "/home/william/ws_moveit/install/srdfdom/local/lib/python3.10/dist-packages",
+        "/home/william/ws_moveit/install/moveit_task_constructor_msgs/local/lib/python3.10/dist-packages",
+        "/home/william/ws_moveit/install/launch_param_builder/lib/python3.10/site-packages",
+        "/home/william/ros2_ws/install/sjtu_drone_control/lib/python3.10/site-packages",
+        "/home/william/ros2_ws/install/sjtu_drone_bringup/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
