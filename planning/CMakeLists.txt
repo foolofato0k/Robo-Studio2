@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(control)
+project(planning)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -22,39 +22,30 @@ include_directories(
   ${moveit_ros_planning_INCLUDE_DIRS}
 )
 
-# add_executable(test_node src/test.cpp)
-# ament_target_dependencies(test_node rclcpp std_msgs trajectory_msgs)
 
-#add_executable(mtc_test src/mtc_node.cpp)
+# If you're creating a Python script, use install(PROGRAMS) instead:
+install(PROGRAMS
+  src/planning.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
-add_executable(mtc_test src/mtc_moveit.cpp)
-ament_target_dependencies(mtc_test rclcpp std_msgs trajectory_msgs moveit_core moveit_ros_planning moveit_ros_planning_interface)
 
-
-ament_target_dependencies(mtc_test 
-    rclcpp 
-    moveit_core 
-    std_msgs 
-    trajectory_msgs 
-    moveit_ros_planning 
-    moveit_ros_planning_interface
-    moveit_task_constructor_core  
-    moveit_msgs)
+# ament_target_dependencies(mtc_test 
+#     rclcpp 
+#     moveit_core 
+#     std_msgs 
+#     trajectory_msgs 
+#     moveit_ros_planning 
+#     moveit_ros_planning_interface
+#     moveit_task_constructor_core  
+#     moveit_msgs)
 
 
 # add_executable(mtc_main src/main.cpp src/mtc_task.cpp)
 # ament_target_dependencies(mtc_main rclcpp std_msgs trajectory_msgs moveit_core moveit_ros_planning moveit_ros_planning_interface moveit_task_constructor_core moveit_task_constructor_msgs)
 
-install(TARGETS
-  #test_node
-  mtc_test
-  # mtc_main
-  DESTINATION lib/${PROJECT_NAME}
-)
 
 install(DIRECTORY
-  launch
-  config
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -31,15 +31,15 @@ add_executable(mtc_test src/mtc_moveit.cpp)
 ament_target_dependencies(mtc_test rclcpp std_msgs trajectory_msgs moveit_core moveit_ros_planning moveit_ros_planning_interface)
 
 
-ament_target_dependencies(mtc_test 
-    rclcpp 
-    moveit_core 
-    std_msgs 
-    trajectory_msgs 
-    moveit_ros_planning 
-    moveit_ros_planning_interface
-    moveit_task_constructor_core  
-    moveit_msgs)
+# ament_target_dependencies(mtc_test 
+#     rclcpp 
+#     moveit_core 
+#     std_msgs 
+#     trajectory_msgs 
+#     moveit_ros_planning 
+#     moveit_ros_planning_interface
+#     moveit_task_constructor_core  
+#     moveit_msgs)
 
 
 # add_executable(mtc_main src/main.cpp src/mtc_task.cpp)
@@ -53,7 +53,7 @@ install(TARGETS
 )
 
 install(DIRECTORY
-  launch
+  #launch
   config
   DESTINATION share/${PROJECT_NAME}
 )
