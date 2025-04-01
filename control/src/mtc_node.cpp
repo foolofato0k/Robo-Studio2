@@ -16,7 +16,7 @@
 #include <tf2_eigen/tf2_eigen.h>
 #endif
 
-static const rclcpp::Logger LOGGER = rclcpp::get_logger("mtc_tutorial");
+static const rclcpp::Logger LOGGER = rclcpp::get_logger("mtc_node_logger");
 namespace mtc = moveit::task_constructor;
 
 class MTCTaskNode
@@ -103,7 +103,7 @@ mtc::Task MTCTaskNode::createTask()
   task.stages()->setName("demo task");
   task.loadRobotModel(node_);
 
-  const auto& arm_group_name = "panda_arm";
+  const auto& arm_group_name = "ur_manipulator";
   const auto& hand_group_name = "hand";
   const auto& hand_frame = "panda_hand";
 
