@@ -41,6 +41,9 @@ std::vector<moveit_msgs::msg::CollisionObject> createCollisionObjects(
 
 // Function to update waypoints so that each is 0.1m above the corresponding box and end effector faces downward.
 // Downward-facing orientation: 180° rotation about X-axis (quaternion: w=0, x=1, y=0, z=0)
+// ******************************************************** 
+// Can change this function to account for the end-effector 
+// ********************************************************
 std::vector<geometry_msgs::msg::Pose> updateWaypointsForGrasping(
   const std::vector<geometry_msgs::msg::Pose>& original_waypoints, double offset_z)
 {

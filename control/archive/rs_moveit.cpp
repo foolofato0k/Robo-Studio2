@@ -119,7 +119,8 @@ mtc::Task MTCTaskNode::createTask()
   // task.add(std::move(stage_open_hand));
 
   auto stage_test_configuration = std::make_unique<mtc::stages::MoveTo>("test_configuration", interpolation_planner);
-  stage_
+  stage_test_configuration->setGroup(arm_group_name);
+  stage_test_configuration->setGoal("")
   return task;
 }
 
