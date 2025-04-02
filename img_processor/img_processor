@@ -63,19 +63,19 @@ if __name__ == '__main__':
         print("Cannot open camera")
         exit()
      
-     webcam = False
+     webcam = True
      if webcam:
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    print("Can't receive frame (stream end?). Exiting ...")
-                    break
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("Can't receive frame (stream end?). Exiting ...")
+                break
 
-                cv.imshow('fame', frame)
-                if cv.waitKey(1) == ord('s'):
-                    image = frame
-                    break
-            cap.release()
+            cv.imshow('fame', frame)
+            if cv.waitKey(1) == ord('s'):
+                image = frame
+                break
+        cap.release()
             
      else:
          image = cv.imread('test_images/webcam_img.jpg')
@@ -86,7 +86,7 @@ if __name__ == '__main__':
      cv.imwrite('test_images/poster.png',poster)
 
      # Showing Outputs
-     cv.imshow('edge image', edges)
+     #cv.imshow('edge image', edges)
      cv.imshow('poster', poster)
      
      cv.waitKey(0)
