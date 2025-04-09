@@ -13,8 +13,7 @@ find_package(trajectory_msgs REQUIRED)
 find_package(moveit_core REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
-find_package(moveit_task_constructor_core REQUIRED)
-find_package(moveit_task_constructor_msgs REQUIRED)
+
 
 
 include_directories(
@@ -30,16 +29,8 @@ include_directories(
 add_executable(mtc_test src/mtc_moveit.cpp)
 ament_target_dependencies(mtc_test rclcpp std_msgs trajectory_msgs moveit_core moveit_ros_planning moveit_ros_planning_interface)
 
-
-# ament_target_dependencies(mtc_test 
-#     rclcpp 
-#     moveit_core 
-#     std_msgs 
-#     trajectory_msgs 
-#     moveit_ros_planning 
-#     moveit_ros_planning_interface
-#     moveit_task_constructor_core  
-#     moveit_msgs)
+add_executable(ur3_control_node src/ur3_control.cpp)
+ament_target_dependencies(ur3_control_node rclcpp std_msgs trajectory_msgs moveit_core moveit_ros_planning moveit_ros_planning_interface)
 
 
 # add_executable(mtc_main src/main.cpp src/mtc_task.cpp)

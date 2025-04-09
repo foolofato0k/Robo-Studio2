@@ -6,54 +6,64 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <vector>
 #include <iostream>
+#include "ur3_control.hpp"
+
+using namespace std::chrono_literals;
 
 UR3Control::UR3Control () : rclcpp::Node("ur3_control"),
-    move_group_(node, "ur_manipulator")
+    move_group_(this, "ur_manipulator"),
+    control_in_progress_(false)
 {
     // Create subscriber for goal poses
     goals_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
-    "goals_pose_topic", 10, std::bind(&UR3Control::goalCallback, this, std::placeholders::_1));   
+    "goals_pose_topic", 10, std::bind(&UR3Control::goalsCallback, this, std::placeholders::_1));  
+    // Create a timer to periodically check and move to next pose (optional)
+    timer_ = this->create_wall_timer(
+        std::chrono::milliseconds(500), std::bind(&UR3Control::timerCallback, this)); 
 }
 
-void UR3Control::goalCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg)
+void UR3Control::goalsCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg)
 {
   // Add received waypoint to the waypoints list
-  pose_array_ = *msg; 
-  //RCLCPP_INFO(this->get_logger(), "Received goal: x=%.2f, y=%.2f, z=%.2f", msg->position.x, msg->position.y, msg->position.z);
+  pose_array_ = msg->poses; 
+  RCLCPP_INFO(this->get_logger(), "Received goals");
 }
 
+void UR3Control::timerCallback(){
+
+}
 
 	// Function to create collision objects (50mm cubes) at the given waypoints.
-	std::vector<moveit_msgs::msg::CollisionObject> createCollisionObjects(
-    const std::vector<geometry_msgs::msg::Pose>& waypoints,
-		const std::string& planning_frame)
-	{
-		std::vector<moveit_msgs::msg::CollisionObject> collision_objects;
-		for (size_t i = 0; i < waypoints.size(); ++i)
-		{
-			moveit_msgs::msg::CollisionObject collision_object;
-			collision_object.header.frame_id = planning_frame;
-			collision_object.id = "cube_" + std::to_string(i);
+	// std::vector<moveit_msgs::msg::CollisionObject> createCollisionObjects(
+    // const std::vector<geometry_msgs::msg::Pose>& waypoints,
+	// 	const std::string& planning_frame)
+	// {
+	// 	std::vector<moveit_msgs::msg::CollisionObject> collision_objects;
+	// 	for (size_t i = 0; i < waypoints.size(); ++i)
+	// 	{
+	// 		moveit_msgs::msg::CollisionObject collision_object;
+	// 		collision_object.header.frame_id = planning_frame;
+	// 		collision_object.id = "cube_" + std::to_string(i);
 
-			// Define the cube primitive (50mm cube = 0.05m each side)
-			shape_msgs::msg::SolidPrimitive primitive;
-			primitive.type = primitive.BOX;
-			primitive.dimensions.resize(3);
-			primitive.dimensions[0] = 0.05;
-			primitive.dimensions[1] = 0.05;
-			primitive.dimensions[2] = 0.05;
+	// 		// Define the cube primitive (50mm cube = 0.05m each side)
+	// 		shape_msgs::msg::SolidPrimitive primitive;
+	// 		primitive.type = primitive.BOX;
+	// 		primitive.dimensions.resize(3);
+	// 		primitive.dimensions[0] = 0.05;
+	// 		primitive.dimensions[1] = 0.05;
+	// 		primitive.dimensions[2] = 0.05;
 
-			// Set the pose of the cube to be at the given waypoint
-			geometry_msgs::msg::Pose cube_pose = waypoints[i];
+	// 		// Set the pose of the cube to be at the given waypoint
+	// 		geometry_msgs::msg::Pose cube_pose = waypoints[i];
 
-			collision_object.primitives.push_back(primitive);
-			collision_object.primitive_poses.push_back(cube_pose);
-			collision_object.operation = collision_object.ADD;
+	// 		collision_object.primitives.push_back(primitive);
+	// 		collision_object.primitive_poses.push_back(cube_pose);
+	// 		collision_object.operation = collision_object.ADD;
 
-			collision_objects.push_back(collision_object);
-		}
-		return collision_objects;
-	}
+	// 		collision_objects.push_back(collision_object);
+	// 	}
+	// 	return collision_objects;
+	// }
 
 	// Function to update waypoints so that each is 0.1m above the corresponding box and end effector faces downward.
 	// Downward-facing orientation: 180° rotation about X-axis (quaternion: w=0, x=1, y=0, z=0)
@@ -124,71 +134,71 @@ int main(int argc, char * argv[])
 }
 
 
-	int main(int argc, char** argv)
-	{
-		// Initialize ROS 2
-		rclcpp::init(argc, argv);
-		auto node = rclcpp::Node::make_shared("ur3_control");
+// int main(int argc, char** argv)
+// {
+// 	// Initialize ROS 2
+// 	rclcpp::init(argc, argv);
+// 	auto node = rclcpp::Node::make_shared("ur3_control");
 
-		// Create a MultiThreadedExecutor for asynchronous callbacks.
-		rclcpp::executors::MultiThreadedExecutor executor;
-		executor.add_node(node);
+// 	// Create a MultiThreadedExecutor for asynchronous callbacks.
+// 	rclcpp::executors::MultiThreadedExecutor executor;
+// 	executor.add_node(node);
 
-		// Create the MoveGroupInterface for your robot's planning group
-		const std::string planning_group = "ur_manipulator";
-		moveit::planning_interface::MoveGroupInterface move_group(node, planning_group);
+// 	// Create the MoveGroupInterface for your robot's planning group
+// 	const std::string planning_group = "ur_manipulator";
+// 	moveit::planning_interface::MoveGroupInterface move_group(node, planning_group);
 
-		// Create the PlanningSceneInterface to add collision objects
-		moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
+// 	// Create the PlanningSceneInterface to add collision objects
+// 	moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
-		// Optional: set planning time, velocity scaling, etc.
-		move_group.setPlanningTime(10.0);
-		move_group.setMaxVelocityScalingFactor(0.1);
+//     // Optional: set planning time, velocity scaling, etc.
+// 	move_group.setPlanningTime(10.0);
+// 	move_group.setMaxVelocityScalingFactor(0.1);
 
-		// Allow time for initialization
-		rclcpp::sleep_for(std::chrono::seconds(2));
+// 	// Allow time for initialization
+// 	rclcpp::sleep_for(std::chrono::seconds(2));
 
-		// Define original waypoints for the box positions
-		std::vector<geometry_msgs::msg::Pose> original_waypoints;
+// 	// Define original waypoints for the box positions
+// 	std::vector<geometry_msgs::msg::Pose> original_waypoints;
 
-		geometry_msgs::msg::Pose target_pose1;
-		target_pose1.position.x = 0.1;
-		target_pose1.position.y = 0.4;
-		target_pose1.position.z = 0.05;
-		target_pose1.orientation.w = 1.0;  // Orientation is not used for the cube objects.
-		original_waypoints.push_back(target_pose1);
+// 	geometry_msgs::msg::Pose target_pose1;
+// 	target_pose1.position.x = 0.1;
+// 	target_pose1.position.y = 0.4;
+// 	target_pose1.position.z = 0.05;
+// 	target_pose1.orientation.w = 1.0;  // Orientation is not used for the cube objects.
+// 	original_waypoints.push_back(target_pose1);
 
-		geometry_msgs::msg::Pose target_pose2;
-		target_pose2.position.x = 0.35;
-		target_pose2.position.y = -0.2;
-		target_pose2.position.z = 0.05;
-		target_pose2.orientation.w = 1.0;
-		original_waypoints.push_back(target_pose2);
+// 	geometry_msgs::msg::Pose target_pose2;
+// 	target_pose2.position.x = 0.35;
+// 	target_pose2.position.y = -0.2;
+// 	target_pose2.position.z = 0.05;
+// 	target_pose2.orientation.w = 1.0;
+// 	original_waypoints.push_back(target_pose2);
 
-		geometry_msgs::msg::Pose target_pose3;
-		target_pose3.position.x = 0.35;
-		target_pose3.position.y = 0.2;
-		target_pose3.position.z = 0.05;
-		target_pose3.orientation.w = 1.0;
-		original_waypoints.push_back(target_pose3);
+// 	geometry_msgs::msg::Pose target_pose3;
+// 	target_pose3.position.x = 0.35;
+// 	target_pose3.position.y = 0.2;
+// 	target_pose3.position.z = 0.05;
+// 	target_pose3.orientation.w = 1.0;
+// 	original_waypoints.push_back(target_pose3);
 
-		// Add collision objects (cubes) at the original waypoints
-		auto collision_objects = createCollisionObjects(original_waypoints, move_group.getPlanningFrame());
-		planning_scene_interface.applyCollisionObjects(collision_objects);
-		RCLCPP_INFO(node->get_logger(), "Added %zu collision objects (cubes) to the planning scene.", collision_objects.size());
+// 	// Add collision objects (cubes) at the original waypoints
+// 	auto collision_objects = createCollisionObjects(original_waypoints, move_group.getPlanningFrame());
+// 	planning_scene_interface.applyCollisionObjects(collision_objects);
+// 	RCLCPP_INFO(node->get_logger(), "Added %zu collision objects (cubes) to the planning scene.", collision_objects.size());
 
-		// Wait for user input before proceeding
-		std::cout << "Press Enter to continue with the task..." << std::endl;
-		std::cin.get();
+// 	// Wait for user input before proceeding
+// 	std::cout << "Press Enter to continue with the task..." << std::endl;
+// 	std::cin.get();
 
-		// Update waypoints to be 0.1m above each cube and set end effector facing downward
-		double grasp_offset = 0.1;
-		auto grasp_waypoints = updateWaypointsForGrasping(original_waypoints, grasp_offset);
+// 	// Update waypoints to be 0.1m above each cube and set end effector facing downward
+// 	double grasp_offset = 0.1;
+// 	auto grasp_waypoints = updateWaypointsForGrasping(original_waypoints, grasp_offset);
 
-		// Plan and execute the Cartesian path based on the updated waypoints
-		planAndExecuteCartesianPath(move_group, grasp_waypoints, node->get_logger());
+// 	// Plan and execute the Cartesian path based on the updated waypoints
+// 	planAndExecuteCartesianPath(move_group, grasp_waypoints, node->get_logger());
 
-		// Shutdown ROS 2
-		rclcpp::shutdown();
-		return 0;
-	}
+// 	// Shutdown ROS 2
+// 	rclcpp::shutdown();
+// 	return 0;
+// }
