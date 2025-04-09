@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import matplotlib.pyplot as plt
 
 def detectFaceEdges(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY) # convert to grayscale for processing
@@ -15,6 +16,7 @@ def detectFaceEdges(img):
         roi = roi[y:y+h, x:x+w]
     roi = cv.resize(roi, (200, 200)) # for canvas creation - can comment out if needed
     
+
     # EDGE DETECTION ______________________
     # Add Gussian Blur
     img_blur = cv.GaussianBlur(roi, (3,3), 0)
@@ -23,9 +25,10 @@ def detectFaceEdges(img):
 
     return edge_img
 
-def createPoster(img, buffer): # private function
+def createPoster(img): # private function
         
         # CREATE POSTER - based on face image shape ___________________________
+        buffer = 2
         w, h = img.shape
         canvas = np.zeros((w*buffer,h*buffer),dtype=np.uint8) # create poster
         cw, ch = canvas.shape
@@ -51,43 +54,83 @@ def createPoster(img, buffer): # private function
 
         return canvas
 
-def getSVG(img):
-     pass
+def getEdgeGroups(img):
+   
+   img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel - I'll search up a better way to do this later
+   num_labels, labels_img = cv.connectedComponents(img) # get the groups - mess with the parameters later
+
+   # DICTIONARY _______________________________
+   # in the form of:
+   #    group_label: [(point in group)]
+   #    1 : [(x,y), (x,y), (x,y)]
+
+   edge_groups = {label: [] for label in range(num_labels)} 
+   for label in range(1, num_labels):
+         edge_groups[label] = np.column_stack(np.where(labels_img == label)).tolist()
+
+   # REMOVE NOISE _____________________________
+   min_size = 10 # recreate dictonary with groups larger than 10 points
+   edge_groups = {i: group for i, group in edge_groups.items() if len(group) >= min_size}
+   
+   return edge_groups
+
+def WebcamImg(image):
+
+    cap = cv.VideoCapture(0)
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Can't receive frame. Exiting ...")
+            break
+
+        cv.imshow('frame', frame)
+        if cv.waitKey(1) == ord('s'):
+            image = frame
+            break
+    cap.release()
+
+    return image
+
 
 if __name__ == '__main__':
      
-     image = None
-
-     cap = cv.VideoCapture(0)
-     if not cap.isOpened():
-        print("Cannot open camera")
-        exit()
+    image = None
      
-     webcam = True
-     if webcam:
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                print("Can't receive frame (stream end?). Exiting ...")
-                break
-
-            cv.imshow('fame', frame)
-            if cv.waitKey(1) == ord('s'):
-                image = frame
-                break
-        cap.release()
+    webcam = False
+    if webcam:
+        image = WebcamImg(image)
+        if image == None:
+            exit()
             
-     else:
-         image = cv.imread('test_images/webcam_img.jpg')
-         cap.release()
+    else:
+        image = cv.imread('test_images/webcam_img.jpg')
      
-     edges = detectFaceEdges(image)
-     poster = createPoster(edges, 2)
-     cv.imwrite('test_images/poster.png',poster)
+    # PROCESSING EDGES ________________________________________
+    edges = detectFaceEdges(image)
+    poster = createPoster(edges)
+    groups = getEdgeGroups(poster)
 
-     # Showing Outputs
-     #cv.imshow('edge image', edges)
-     cv.imshow('poster', poster)
-     
-     cv.waitKey(0)
-     cv.destroyAllWindows()
+    # SHOWING OUTPUTS _________________________________________
+    #cv.imshow('edge image', edges)
+    cv.imshow('poster', poster)
+    cv.imwrite('test_images/poster.png',poster)
+
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    for i, group in groups.items():
+        x, y = zip(*group)
+        ax.scatter(x, y, marker='o', s=2, label=f'Group {i}')
+
+    # show one group
+    fig2, ax2 = plt.subplots(figsize=(6, 6))
+    group = groups.get(1)
+    y, x = zip(*group)
+    ax2.scatter(x, y, marker='o')
+
+    plt.show()
