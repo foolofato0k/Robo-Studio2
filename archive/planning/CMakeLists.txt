@@ -26,6 +26,7 @@ include_directories(
 # If you're creating a Python script, use install(PROGRAMS) instead:
 install(PROGRAMS
   src/planning.py
+  src/test_publish_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
