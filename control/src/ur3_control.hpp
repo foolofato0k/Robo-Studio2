@@ -22,24 +22,30 @@ private:
     // ROS2 Subscribers
     rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr goals_subscriber_;
     rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::TimerBase::SharedPtr timer_init_;
 
     // Moveit Interfaces
-    moveit::planning_interface::MoveGroupInterface move_group_;
+    std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
+    const std::string planning_group_ = "ur_manipulator";
     moveit::planning_interface::PlanningSceneInterface planning_scene_interface_;
 
     // Internal state
-    std::vector<geometry_msgs::msg::Pose> waypoints_;
-    std::vector<geometry_msgs::msg::Pose> pose_array_;
+    std::vector<geometry_msgs::msg::Pose> original_waypoints_;      // Robot Control Points
+    std::vector<geometry_msgs::msg::Pose> updated_waypoints_; 
+    std::atomic<bool> control_in_progress_;                         // Robot movement in progress
 
     // Member functions
     void goalsCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg);
     void timerCallback();
-    void planAndExecute(const std::vector<geometry_msgs::msg::Pose>& waypoints);
+    void delayedInit();
+    bool planAndExecuteCartesianPath(moveit::planning_interface::MoveGroupInterface& move_group,
+        const std::vector<geometry_msgs::msg::Pose>& waypoints,
+        rclcpp::Logger logger);
 
     // std::vector<moveit_msgs::msg::CollisionObject> createCollisionObjects(
     //     const std::vector<geometry_msgs::msg::Pose>& waypoints,
     //     const std::string& planning_frame);
-    std::vector<geometry_msgs::msg::Pose> updateWaypointsForGrasping(
+    std::vector<geometry_msgs::msg::Pose> updateWaypointsForDrawing(
         const std::vector<geometry_msgs::msg::Pose>& original_waypoints, double offset_z);
 };
 

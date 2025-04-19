@@ -1,10 +1,13 @@
 # UR3 Control Package
 
-To test demo code, run in seperate terminals:
+To run test nodes code, run in seperate terminals:
+This demonstrates the ur3_control_node subscribing to geometry::PoseArray
+and then completing the cartesian movements of the array.
 
 ros2 launch ur_simulation_gazebo ur_sim_moveit.launch.py
 and 
-ros2 run control mtc_test
+ros2 run control ur3_control_node
+ros2 run control pose_array_publisher
 
 To RUN actual robot, run in seperate terminals:
 1. ros2 launch ur_robot_driver ur_control.launch.py ur_type:=ur3e robot_ip:=192.168.0.194 launch_rviz:=true

@@ -32,6 +32,9 @@ ament_target_dependencies(mtc_test rclcpp std_msgs trajectory_msgs moveit_core m
 add_executable(ur3_control_node src/ur3_control.cpp)
 ament_target_dependencies(ur3_control_node rclcpp std_msgs trajectory_msgs moveit_core moveit_ros_planning moveit_ros_planning_interface)
 
+add_executable(pose_array_publisher src/test_publish_node.cpp)
+ament_target_dependencies(pose_array_publisher rclcpp geometry_msgs)
+
 
 # add_executable(mtc_main src/main.cpp src/mtc_task.cpp)
 # ament_target_dependencies(mtc_main rclcpp std_msgs trajectory_msgs moveit_core moveit_ros_planning moveit_ros_planning_interface moveit_task_constructor_core moveit_task_constructor_msgs)
@@ -39,6 +42,8 @@ ament_target_dependencies(ur3_control_node rclcpp std_msgs trajectory_msgs movei
 install(TARGETS
   #test_node
   mtc_test
+  ur3_control_node
+  pose_array_publisher
   # mtc_main
   DESTINATION lib/${PROJECT_NAME}
 )
