@@ -11,6 +11,19 @@ and
 ros2 run control ur3_control_node
 ros2 run py_planning test_publisher_node
 
+<!-- ### Simplified Simulation Test (with workspace auto‑sourcing)
+
+* **One‑time setup**: Add your workspace’s setup file to your shell startup (e.g. `~/.bashrc` or `~/.zshrc`), replacing the path with your own workspace:
+    echo "source /path/to/your/ros2_ws/install/setup.bash" >> ~/.bashrc
+ 
+Or manually source in each new terminal:
+source /path/to/your/ros2_ws/install/setup.bash
+
+Commands to run:
+* **Terminal 1: Gazebo + MoveIt** ros2 launch ur_simulation_gazebo ur_sim_moveit.launch.py 
+* **Terminal 2: UR3 control node** ros2 run control ur3_control_node 
+* **Terminal 3: PoseArray publisher** ros2 run control pose_array_publisher -->
+
 
 ### Real Robot Test w/out nodes
 To RUN actual robot, run in seperate terminals:
