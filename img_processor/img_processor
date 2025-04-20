@@ -123,7 +123,7 @@ if __name__ == '__main__':
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-    # Plotting Paths
+    # Paths
     fig, ax = plt.subplots(figsize=(6, 6))
     i = 0
     for path in paths:
