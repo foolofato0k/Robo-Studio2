@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>gui</name>
+  <version>0.0.1</version>
+  <description>Camera GUI + photo_publisher node</description>
+  <maintainer email="jesse.gonzalez@student.uts.edu.au">jesse</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- Tell colcon to use the ament_python builder -->
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <!-- Your imports in gui_node.py -->
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
