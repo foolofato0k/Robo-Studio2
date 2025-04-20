@@ -118,7 +118,7 @@ class PosePlanner(Node):
         else:
            self.get_logger().info(f'no sequence input, using example path')
            self.declare_example_paths() 
-        self.create_timer(1.0, self.publish_poses_once)
+        self.timer_ = self.create_timer(1.0, self.publish_poses_once)
 
     def publish_poses_once(self):
         #self.declare_example_paths()
@@ -131,7 +131,7 @@ class PosePlanner(Node):
         self.publisher_.publish(pose_array)
         self.get_logger().info(f'Published {len(pose_array.poses)} poses')
 
-        self.timer.cancel()  # publish only once
+        self.timer_.cancel()  # publish only once
 
     def declare_example_paths(self):
         # Line 1
@@ -165,30 +165,38 @@ def create_pose(x, y, z=0.0, w=1.0):
 def main(args=None):
     rclpy.init(args=args)
     
-    TEST1 = True
-    TEST2 = False
+    TEST1 = False
+    TEST2 = True
     sequences = None
     if(TEST1):
         # A square path (10cm x 10cm)
         square = [
-            create_pose(0.3, 0.1),
-            create_pose(0.4, 0.1),
-            create_pose(0.4, 0.2),
-            create_pose(0.3, 0.2),
-            create_pose(0.3, 0.1)  # Closing the square
+            create_pose(0.1, 0.4, 0.05),
+            create_pose(0.4, 0.2, 0.05),
+            create_pose(0.4, 0.3, 0.05),
+            create_pose(0.3, 0.3, 0.05),
+            create_pose(0.3, 0.2, 0.05)  # Closing the square
         ]
         sequences = [square]
 
     if(TEST2):
         # A triangle path
         triangle = [
-            create_pose(0.5, 0.0),
-            create_pose(0.6, 0.1),
-            create_pose(0.4, 0.1),
-            create_pose(0.5, 0.0)  # Closing the triangle
+            create_pose(0.2, 0.2, 0.05),
+            create_pose(0.25, 0.3, 0.05),
+            create_pose(0.15, 0.3, 0.05),
+            create_pose(0.2, 0.2, 0.05)  # Closing the triangle
         ]
-        sequences = [triangle]
+        square = [
+            create_pose(0.1, 0.4, 0.05),   # Top-left
+            create_pose(0.25, 0.4, 0.05),  # Top-right
+            create_pose(0.25, 0.25, 0.05), # Bottom-right
+            create_pose(0.1, 0.25, 0.05),  # Bottom-left
+            create_pose(0.1, 0.4, 0.05)    # Closing the square
+]
+        sequences = [square, triangle]
 
+    
     node = PosePlanner(sequences)
     rclpy.spin(node)
     node.destroy_node()

@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'test_publish_node = py_planning.test_publish_node:main'
+            'test_publish_node = py_planning.test_publish_node:main',
+            'pose_planner_node = py_planning.pose_planner_node:main'
         ],
     },
 )

@@ -8,7 +8,7 @@ class PoseArrayPublisher(Node):
     def __init__(self):
         super().__init__('test_pose_publisher')
         self.publisher_ = self.create_publisher(PoseArray, 'goals_pose_topic', 10)
-        self.subscriber_ = self.create_subscription(Bool, 'photo_confirmed', self.photo_confirmed_callback)
+        self.subscriber_ = self.create_subscription(Bool, 'photo_confirmed', self.photo_confirmed_callback, 10)
         
         self.photo_confirmed = False
         # Create a timer that fires once after 1 second
