@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
+import potrace
 
 def detectFaceEdges(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY) # convert to grayscale for processing
@@ -23,7 +24,9 @@ def detectFaceEdges(img):
     # Detect Edges
     edge_img = cv.Canny(image=img_blur, threshold1=20, threshold2=120) # Canny Edge Detection
 
-    return edge_img
+    poster = createPoster(edge_img)
+
+    return poster
 
 def createPoster(img): # private function
         
@@ -54,25 +57,24 @@ def createPoster(img): # private function
 
         return canvas
 
-def getEdgeGroups(img):
-   
-   img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel - I'll search up a better way to do this later
-   num_labels, labels_img = cv.connectedComponents(img) # get the groups - mess with the parameters later
+def getPaths(img):
 
-   # DICTIONARY _______________________________
-   # in the form of:
-   #    group_label: [(point in group)]
-   #    1 : [(x,y), (x,y), (x,y)]
+    img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel
+    num_labels, labels_img = cv.connectedComponents(img) # get the groups - mess with the parameters later
+    h, w = labels_img.shape
 
-   edge_groups = {label: [] for label in range(num_labels)} 
-   for label in range(1, num_labels):
-         edge_groups[label] = np.column_stack(np.where(labels_img == label)).tolist()
+    paths = []
+    pt_type = None
 
-   # REMOVE NOISE _____________________________
-   min_size = 10 # recreate dictonary with groups larger than 10 points
-   edge_groups = {i: group for i, group in edge_groups.items() if len(group) >= min_size}
-   
-   return edge_groups
+    for label in range(num_labels):
+
+        mask = (labels_img == label).astype(np.uint8) 
+        bitmap = potrace.Bitmap(mask.astype(bool))
+        path = bitmap.trace()
+
+        paths.append(path)
+
+    return paths
 
 def WebcamImg(image):
 
@@ -110,27 +112,28 @@ if __name__ == '__main__':
         image = cv.imread('test_images/webcam_img.jpg')
      
     # PROCESSING EDGES ________________________________________
-    edges = detectFaceEdges(image)
-    poster = createPoster(edges)
-    groups = getEdgeGroups(poster)
+    poster = detectFaceEdges(image)
+    paths = getPaths(poster)
 
     # SHOWING OUTPUTS _________________________________________
-    #cv.imshow('edge image', edges)
+    # Image
     cv.imshow('poster', poster)
     cv.imwrite('test_images/poster.png',poster)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
 
+    # Plotting Paths
     fig, ax = plt.subplots(figsize=(6, 6))
-    for i, group in groups.items():
-        x, y = zip(*group)
-        ax.scatter(x, y, marker='o', s=2, label=f'Group {i}')
+    i = 0
+    for path in paths:
+        if i == 0:
+            i += 1
+            continue
+        for curve in path:
+            curve_verts = curve.tesselate()
+            x, y = zip(*curve_verts)
+            ax.scatter(x, y, marker='o', s=2, label=f'Group {i}')
 
-    # show one group
-    fig2, ax2 = plt.subplots(figsize=(6, 6))
-    group = groups.get(1)
-    y, x = zip(*group)
-    ax2.scatter(x, y, marker='o')
-
+        i += 1
     plt.show()
