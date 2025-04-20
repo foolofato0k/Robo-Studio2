@@ -5,7 +5,7 @@ from geometry_msgs.msg import Pose, PoseArray
 class PoseArrayPublisher(Node):
 
     def __init__(self):
-        super().__init__('pose_array_publisher')
+        super().__init__('test_pose_publisher')
         self.publisher_ = self.create_publisher(PoseArray, 'goals_pose_topic', 10)
 
         # Create a timer that fires once after 1 second
