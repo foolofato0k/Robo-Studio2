@@ -13,6 +13,7 @@ class PoseSequenceBuilder:
     def add_sequence(self, pose_list):
         self.sequences.append(pose_list)
 
+
     def build_pose_array(self):
         all_poses = []
 
@@ -107,19 +108,20 @@ class PoseScaler:
 
 
 class PosePlanner(Node):
-    def __init__(self):
+    def __init__(self, sequences=None):
         super().__init__('path_planning')
         self.publisher_ = self.create_publisher(PoseArray, 'goals_pose_topic', 10)
-        
         self.builder = PoseSequenceBuilder()
-        self.test = False
-
-
-
+        if sequences:
+            for seq in sequences:
+                self.builder.add_sequence(seq)
+        else:
+           self.get_logger().info(f'no sequence input, using example path')
+           self.declare_example_paths() 
         self.create_timer(1.0, self.publish_poses_once)
 
     def publish_poses_once(self):
-        self.declare_example_paths()
+        #self.declare_example_paths()
         pose_array = PoseArray()
         pose_array.header.stamp = self.get_clock().now().to_msg()
         pose_array.header.frame_id = 'world'
@@ -151,12 +153,47 @@ class PosePlanner(Node):
         self.builder.add_sequence(line2)
 
 
+def create_pose(x, y, z=0.0, w=1.0):
+    pose = Pose()
+    pose.position.x = x
+    pose.position.y = y
+    pose.position.z = z
+    pose.orientation.w = w
+    return pose
+
+
 def main(args=None):
     rclpy.init(args=args)
-    node = PosePlanner()
+    
+    TEST1 = True
+    TEST2 = False
+    sequences = None
+    if(TEST1):
+        # A square path (10cm x 10cm)
+        square = [
+            create_pose(0.3, 0.1),
+            create_pose(0.4, 0.1),
+            create_pose(0.4, 0.2),
+            create_pose(0.3, 0.2),
+            create_pose(0.3, 0.1)  # Closing the square
+        ]
+        sequences = [square]
+
+    if(TEST2):
+        # A triangle path
+        triangle = [
+            create_pose(0.5, 0.0),
+            create_pose(0.6, 0.1),
+            create_pose(0.4, 0.1),
+            create_pose(0.5, 0.0)  # Closing the triangle
+        ]
+        sequences = [triangle]
+
+    node = PosePlanner(sequences)
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
+
 
 
 if __name__ == '__main__':
