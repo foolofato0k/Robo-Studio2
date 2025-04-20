@@ -14,7 +14,7 @@ and then completing the cartesian movements of the array.
 ros2 launch ur_simulation_gazebo ur_sim_moveit.launch.py
 and 
 ros2 run control ur3_control_node
-ros2 run py_planning test_publisher_node
+ros2 run py_planning test_publish_node
 
 
 ### Real Robot Test w/out nodes
