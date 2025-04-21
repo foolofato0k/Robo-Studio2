@@ -32,6 +32,10 @@ def detectFaceEdges(img):
     # Detect Edges
     edge_img = cv.Canny(image=img_blur, threshold1=20, threshold2=120) # Canny Edge Detection
 
+    # Try to clean image
+    kernel = np.ones((5, 5), np.uint8)
+    edge_img = cv.morphologyEx(edge_img, cv.MORPH_CLOSE, kernel)
+
     poster = createPoster(edge_img)
 
     return poster
@@ -67,6 +71,8 @@ def createPoster(img): # private function
 
 def getPaths(img):
 
+    ### OLD VERSION of contour generation
+
     img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel
     num_labels, labels_img = cv.connectedComponents(img) # get the groups - mess with the parameters later
     h, w = labels_img.shape
@@ -82,6 +88,17 @@ def getPaths(img):
 
         paths.append(path)
 
+    ### NEW VERSION of contour generation
+    # contours, _ = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+    # paths = []
+    # for cnt in contours:
+    #     mask = np.zeros_like(img)
+    #     cv.drawContours(mask, [cnt], -1, color=255, thickness=cv.FILLED)
+
+    #     bitmap = potrace.Bitmap(mask.astype(bool))
+    #     path = bitmap.trace()
+    #     paths.append(path)
     return paths
 
 def WebcamImg(image):
@@ -105,17 +122,29 @@ def WebcamImg(image):
 
     return image
 
-def tesselate(curves):
+
+    
+def tesselate(curves, distance_threshold=40.0):
     stroke_plan = []
     for path in curves:
-        stroke = []
         for curve in path:
             curve_verts = curve.tesselate()
-            for x, y in curve_verts:
-                stroke.append((x,y))
-        stroke_plan.append(stroke)
+            if len(curve_verts) < 2:
+                continue
+
+            current_stroke = [curve_verts[0]]
+            for i in range(1, len(curve_verts)):
+                prev = np.array(curve_verts[i-1])
+                curr = np.array(curve_verts[i])
+                if np.linalg.norm(curr - prev) > distance_threshold:
+                    stroke_plan.append(current_stroke)
+                    current_stroke = []
+                current_stroke.append(tuple(curr))
+            if current_stroke:
+                stroke_plan.append(current_stroke)
     return stroke_plan
-    
+
+
 if __name__ == '__main__':
      
     image = None

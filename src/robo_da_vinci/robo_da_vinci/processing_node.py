@@ -1,5 +1,6 @@
 from py_planning.pose_sequence_builder import PoseSequenceBuilder
 from robo_da_vinci.img_processor import WebcamImg, detectFaceEdges, getPaths, tesselate
+from py_planning.visual_utils import plot_3d_points
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Pose, PoseArray
@@ -63,6 +64,8 @@ class ProcessingNode(Node):
 
             # PLAN PATH
             stroke_plan = pose_builder.build_pose_array()
+            if(True):
+                plot_3d_points(stroke_plan.poses)
 
             # Keep only the first 10 poses TESTING PURPOSES
             #stroke_plan.poses = stroke_plan.poses[:500]

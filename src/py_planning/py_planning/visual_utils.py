@@ -31,7 +31,7 @@ def plot_3d_points(poses):
     ax.set_zlabel("Z")
     ax.set_box_aspect([1,1,1])
     plt.tight_layout()
-    ax.plot(x, y, z, color='red', linestyle='--', marker='o')  # line + points
+    ax.plot(x, y, z, color='red', linestyle='--', marker= '')  # line + points
     plt.show()
 
 def main():
