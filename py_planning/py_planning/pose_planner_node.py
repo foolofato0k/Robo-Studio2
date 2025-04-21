@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Pose, PoseArray
+from planning import PoseScaler, PoseSequenceBuilder
 
 
 class PoseSequenceBuilder:

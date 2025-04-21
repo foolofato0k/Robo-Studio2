@@ -48,4 +48,6 @@ Run the visual_testing/visual_tests.py file
 * Create a function that adjusts the points based on the gripper
 
 ### Planning
+* Make the planning more resiliant (move to a good planning location at the start)
+* Refactor the main planning class to make more sense
 * 
