@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'my_node = robo_da_vinci.my_node:main'
+            'processing_node = robo_da_vinci.processing_node:main'
         ],
     },
 )

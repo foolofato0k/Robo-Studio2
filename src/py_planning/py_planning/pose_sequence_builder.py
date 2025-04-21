@@ -81,10 +81,10 @@ class PoseSequenceBuilder:
 
 
     def build_pose_array(self, lift_height=0.15, draw_height=0.05):
-        final_plan = []
+        final_plan = PoseArray()
 
-        if not self.scaled_strokes:
-            self.scaled_strokes = self.original_strokes
+        if not self.scaled_strokes or not isinstance(self.scaled_strokes[0][0], Pose):
+            raise ValueError("Call scale_and_center() first to convert strokes to Pose objects.")
 
         # Add initial overhead center pose
         all_points = [pose for stroke in self.scaled_strokes for pose in stroke]
@@ -95,9 +95,10 @@ class PoseSequenceBuilder:
             center_pose = Pose()
             center_pose.position.x = mean_x
             center_pose.position.y = mean_y
-            center_pose.position.z = 0.2
+            center_pose.position.z = 0.15
             center_pose.orientation.w = 1.0
-            final_plan.append(center_pose)
+            final_plan._poses.append(center_pose)
+            #final_plan.append(center_pose)
 
         # Adjust and plan all the strokes
         for stroke in self.scaled_strokes:
@@ -113,11 +114,15 @@ class PoseSequenceBuilder:
             lifted_start.position.y = start.position.y
             lifted_start.position.z = lift_height
             lifted_start.orientation.w = 1.0
-            final_plan.append(lifted_start)
+            #final_plan.append(lifted_start)
+            final_plan._poses.append(lifted_start)
 
             # Draw path
             for pose in stroke:
-                final_plan.append(pose)
+                pose.position.z = draw_height
+                final_plan._poses.append(pose)
+
+                #final_plan.append(pose)
 
             # Lift at end
             lifted_end = Pose()
@@ -125,9 +130,20 @@ class PoseSequenceBuilder:
             lifted_end.position.y = end.position.y
             lifted_end.position.z = lift_height
             lifted_end.orientation.w = 1.0
-            final_plan.append(lifted_end)
+            final_plan._poses.append(lifted_end)
+            #final_plan.append(lifted_end)
 
         return final_plan 
+    
+    def print_pose_array(self, pose_array: PoseArray):
+        print("=== Pose Sequence ===")
+        for i, pose in enumerate(pose_array.poses):
+            pos = pose.position
+            orient = pose.orientation
+            #print(f"Pose {i}:")
+            print(f"Pose {i}:  Position -> x: {pos.x:.4f}, y: {pos.y:.4f}, z: {pos.z:.4f}")
+            #print(f"  Orientation -> x: {orient.x:.4f}, y: {orient.y:.4f}, z: {orient.z:.4f}, w: {orient.w:.4f}")
+        print("=====================")
  
 
     
