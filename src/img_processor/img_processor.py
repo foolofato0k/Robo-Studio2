@@ -114,7 +114,7 @@ if __name__ == '__main__':
     if image is None:
         print("Failed to load image. Check the path: test_images/webcam_img.jpg")
         exit()
-        
+
     # PROCESSING EDGES ________________________________________
     poster = detectFaceEdges(image)
     paths = getPaths(poster)

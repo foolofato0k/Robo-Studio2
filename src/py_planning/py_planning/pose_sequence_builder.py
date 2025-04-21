@@ -13,7 +13,7 @@ class PoseSequenceBuilder:
     def __init__(self, strokes: List[List[Tuple[float, float]]],):
         self.original_strokes = strokes  # list of list of (x,y)
         self.scaled_strokes = []
-
+    
     def scale_and_center(self, target_width, target_height, center=(0.0,0.0),margin=0.02):
         target_width = target_width - margin * 2
         target_height = target_height - margin * 2
