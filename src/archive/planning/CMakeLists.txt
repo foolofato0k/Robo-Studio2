@@ -13,8 +13,8 @@ find_package(trajectory_msgs REQUIRED)
 find_package(moveit_core REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
-find_package(moveit_task_constructor_core REQUIRED)
-find_package(moveit_task_constructor_msgs REQUIRED)
+#find_package(moveit_task_constructor_core REQUIRED)
+#find_package(moveit_task_constructor_msgs REQUIRED)
 
 
 include_directories(
