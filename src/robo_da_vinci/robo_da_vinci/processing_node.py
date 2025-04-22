@@ -63,7 +63,9 @@ class ProcessingNode(Node):
             ####### TSP IN THE FUTURE TO-DO!!! #######
 
             # PLAN PATH
-            stroke_plan = pose_builder.build_pose_array()
+            stroke_plan = pose_builder.build_pose_array(0.15, 0.1)
+            
+            # Plot poses in 3D
             if(True):
                 plot_3d_points(stroke_plan.poses)
 

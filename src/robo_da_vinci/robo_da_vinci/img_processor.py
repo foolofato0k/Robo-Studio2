@@ -36,9 +36,9 @@ def detectFaceEdges(img):
     kernel = np.ones((5, 5), np.uint8)
     edge_img = cv.morphologyEx(edge_img, cv.MORPH_CLOSE, kernel)
 
-    poster = createPoster(edge_img)
-
-    return poster
+    #poster = createPoster(edge_img)
+    #return poster
+    return edge_img
 
 def createPoster(img): # private function
         
@@ -73,32 +73,32 @@ def getPaths(img):
 
     ### OLD VERSION of contour generation
 
-    img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel
-    num_labels, labels_img = cv.connectedComponents(img) # get the groups - mess with the parameters later
-    h, w = labels_img.shape
-
-    paths = []
-    pt_type = None
-
-    for label in range(num_labels):
-
-        mask = (labels_img == label).astype(np.uint8) 
-        bitmap = potrace.Bitmap(mask.astype(bool))
-        path = bitmap.trace()
-
-        paths.append(path)
-
-    ### NEW VERSION of contour generation
-    # contours, _ = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    # img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel
+    # num_labels, labels_img = cv.connectedComponents(img) # get the groups - mess with the parameters later
+    # h, w = labels_img.shape
 
     # paths = []
-    # for cnt in contours:
-    #     mask = np.zeros_like(img)
-    #     cv.drawContours(mask, [cnt], -1, color=255, thickness=cv.FILLED)
+    # pt_type = None
 
+    # for label in range(num_labels):
+
+    #     mask = (labels_img == label).astype(np.uint8) 
     #     bitmap = potrace.Bitmap(mask.astype(bool))
     #     path = bitmap.trace()
+
     #     paths.append(path)
+
+    ### NEW VERSION of contour generation
+    contours, _ = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+    paths = []
+    for cnt in contours:
+        mask = np.zeros_like(img)
+        cv.drawContours(mask, [cnt], -1, color=255, thickness=cv.FILLED)
+
+        bitmap = potrace.Bitmap(mask.astype(bool))
+        path = bitmap.trace()
+        paths.append(path)
     return paths
 
 def WebcamImg(image):

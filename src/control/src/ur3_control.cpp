@@ -39,10 +39,28 @@ void UR3Control::goalsCallback(const geometry_msgs::msg::PoseArray::SharedPtr ms
     
     updated_waypoints_ = updateWaypointsForDrawing(original_waypoints_, 0);
     
-    if (!move_group_) {
-        RCLCPP_WARN(this->get_logger(), "MoveGroupInterface not initialized yet.");
-        return;
+    // STEP 1: Move to the first pose using standard motion planning
+    // if (!updated_waypoints_.empty()) {
+    //     move_group_->setPoseTarget(updated_waypoints_.front());
+    //     moveit::planning_interface::MoveGroupInterface::Plan plan;
+    //     bool success = (move_group_->plan(plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+
+    //     if (success) {
+    //         RCLCPP_INFO(this->get_logger(), "Moved to start pose using standard planning.");
+    //         move_group_->execute(plan);
+    //     } else {
+    //         RCLCPP_ERROR(this->get_logger(), "Failed to plan to start pose.");
+    //         return;
+    //     }
+    // }
+
+    // STEP 2: Use Cartesian motion for the rest
+    if(!updated_waypoints_.empty()){
+        move_group_->setPoseTarget(updated_waypoints_.front());
+
     }
+
+
     bool control_success = planAndExecuteCartesianPath(*move_group_,updated_waypoints_,this->get_logger());
 }
 
