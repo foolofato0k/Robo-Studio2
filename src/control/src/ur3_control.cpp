@@ -126,17 +126,37 @@ std::vector<geometry_msgs::msg::Pose> UR3Control::updateWaypointsForDrawing(
 	const std::vector<geometry_msgs::msg::Pose>& original_waypoints, double offset_z)
 {
 	std::vector<geometry_msgs::msg::Pose> updated_waypoints;
+
+	double rx = 0.988;
+	double ry = -3.175;
+	double rz = 0.5;
+
+	tf2::Quaternion q;
+	q.setRPY(rx,ry, rz);
+
+
 	for (const auto& pose : original_waypoints)
-	{
+	{	
 		geometry_msgs::msg::Pose new_pose = pose;
-		// Offset by offset_z in the Z direction (assuming the cube's z is its center; adjust if needed)
-		new_pose.position.z += offset_z;
-		// Set orientation for the end effector to face downward.
-		// This quaternion corresponds to a 180° rotation about the X-axis.
-		new_pose.orientation.w = 0.0;
-		new_pose.orientation.x = 1.0;
-		new_pose.orientation.y = 0.0;
-		new_pose.orientation.z = 0.0;
+		// IF FIRST POSE
+		if (pose == original_waypoints.front()){
+			new_pose.orientation.w = 0;
+			new_pose.orientation.x = 1;
+			new_pose.orientation.y = 0;
+			new_pose.orientation.z = 0;
+		}
+		else{
+			// Offset by offset_z in the Z direction (assuming the cube's z is its center; adjust if needed)
+			new_pose.position.z += offset_z;
+			// Set orientation for the end effector to face downward.
+			// This quaternion corresponds to a 180° rotation about the X-axis.
+			new_pose.orientation.w = q.w();
+			new_pose.orientation.x = q.x();
+			new_pose.orientation.y = q.y();
+			new_pose.orientation.z = q.z();
+		}
+
+
 		updated_waypoints.push_back(new_pose);
 	}
 	return updated_waypoints;

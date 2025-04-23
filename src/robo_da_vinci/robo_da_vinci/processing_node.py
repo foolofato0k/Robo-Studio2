@@ -58,12 +58,12 @@ class ProcessingNode(Node):
             pose_builder = PoseSequenceBuilder(image_paths)
 
             # SCALE TO A4 SIZE AND CENTER AT (0, 0.25)
-            pose_builder.scale_and_center(0.297,0.210,(0.1,0.4))
+            pose_builder.scale_and_center(0.297,0.210,(0.1,0.3))
 
             ####### TSP IN THE FUTURE TO-DO!!! #######
 
             # PLAN PATH
-            stroke_plan = pose_builder.build_pose_array(0.15, 0.1)
+            stroke_plan = pose_builder.build_pose_array(0.2, 0.18)
             
             # Plot poses in 3D
             if(True):

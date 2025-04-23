@@ -95,7 +95,7 @@ class PoseSequenceBuilder:
             center_pose = Pose()
             center_pose.position.x = mean_x
             center_pose.position.y = mean_y
-            center_pose.position.z = 0.15
+            center_pose.position.z = 0.2
             center_pose.orientation.w = 1.0
             final_plan._poses.append(center_pose)
             #final_plan.append(center_pose)
