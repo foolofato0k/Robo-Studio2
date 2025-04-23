@@ -131,8 +131,13 @@ std::vector<geometry_msgs::msg::Pose> UR3Control::updateWaypointsForDrawing(
 	double ry = -3.175;
 	double rz = 0.5;
 
+    double roll = rz;   // robot's rotation around Z
+    double pitch = ry;  // rotation around Y
+    double yaw = rx;    // rotation around X
+
 	tf2::Quaternion q;
-	q.setRPY(rx,ry, rz);
+	// q.setRPY(rx,ry, rz);
+    q.setRPY(roll, pitch, yaw);
 
 
 	for (const auto& pose : original_waypoints)
