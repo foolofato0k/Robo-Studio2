@@ -127,6 +127,7 @@ std::vector<geometry_msgs::msg::Pose> UR3Control::updateWaypointsForDrawing(
 {
 	std::vector<geometry_msgs::msg::Pose> updated_waypoints;
 
+    // test
 	double rx = 0.988;
 	double ry = -3.175;
 	double rz = 0.5;
