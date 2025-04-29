@@ -48,19 +48,19 @@ def createPoster(img): # private function
         cv.rectangle(canvas,(75,75),(325,325),color=255,thickness=1, lineType=cv.LINE_AA)
 
         # ADD TEXT_______________________________
-        #Heading = 'WANTED'
-        #subtext1 = 'DEAD OR ALIVE'
-        #subtext2 = '$10'
-        #font_large = 4 # Scale text relative to canvas size
-        #font_small = font_large * 0.5  # Smaller text
-#
-        #heading_pos = (80, 60)  # Top part
-        #subtext1_pos = (80, 360)  # Bottom part
-        #subtext2_pos = (160, 395)  # Near the bottom center
-#
-        #canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_large, color=255, thickness=1, lineType=cv.LINE_AA)
-        #canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
-        #canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
+        Heading = 'WANTED'
+        subtext1 = 'DEAD OR ALIVE'
+        subtext2 = '$10'
+        font_large = 4 # Scale text relative to canvas size
+        font_small = font_large * 0.5  # Smaller text
+
+        heading_pos = (80, 60)  # Top part
+        subtext1_pos = (80, 360)  # Bottom part
+        subtext2_pos = (160, 395)  # Near the bottom center
+
+        canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_large, color=255, thickness=1, lineType=cv.LINE_AA)
+        canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
+        canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
 
         return canvas
 
@@ -119,10 +119,11 @@ def tesselate(curves, distance_threshold=40.0):
     for path in curves:
         for curve in path:
             curve_verts = curve.tesselate()
-            if len(curve_verts) < 2:
+            if len(curve_verts) < 25:
                 continue
 
             current_stroke = [curve_verts[0]]
+
             for i in range(1, len(curve_verts)):
                 prev = np.array(curve_verts[i-1])
                 curr = np.array(curve_verts[i])
