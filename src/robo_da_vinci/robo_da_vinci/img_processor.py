@@ -29,7 +29,7 @@ def detectFaceEdges(img):
 
     # EDGE DETECTION ______________________
     # Add Gussian Blur
-    img_blur = cv.GaussianBlur(roi, (5,5), 0)
+    img_blur = cv.GaussianBlur(roi, (3,3), 0)
     # Detect Edges
     edge_img = cv.Canny(image=img_blur, threshold1=20, threshold2=120) # Canny Edge Detection
 
@@ -45,50 +45,49 @@ def createPoster(img): # private function
         
         canvas = np.zeros((400,400),dtype=np.uint8) # create poster
         canvas[75:325, 75:325] = img
-        cv.rectangle(canvas,(75,75),(325,325),color=255,thickness=1)
+        cv.rectangle(canvas,(75,75),(325,325),color=255,thickness=1, lineType=cv.LINE_AA)
 
         # ADD TEXT_______________________________
         #Heading = 'WANTED'
         #subtext1 = 'DEAD OR ALIVE'
         #subtext2 = '$10'
-
-        #font_large = 5 # Scale text relative to canvas size
+        #font_large = 4 # Scale text relative to canvas size
         #font_small = font_large * 0.5  # Smaller text
 #
-        #heading_pos = (50, 90)  # Top part
-        #subtext1_pos = (50, 350)  # Bottom part
-        #subtext2_pos = (150, 390)  # Near the bottom center
+        #heading_pos = (80, 60)  # Top part
+        #subtext1_pos = (80, 360)  # Bottom part
+        #subtext2_pos = (160, 395)  # Near the bottom center
 #
-        #canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_large, color=255, thickness=1)
-        #canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1)
-        #canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1)
+        #canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_large, color=255, thickness=1, lineType=cv.LINE_AA)
+        #canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
+        #canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
 
         return canvas
 
 def getPaths(img):
 
-    ### OLD VERSION of contour generation - publishes 1586 strokes
-    img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel
-    num_labels, labels_img = cv.connectedComponents(img) # get the groups
-    paths = []
-    for label in range(num_labels):
-        if label == 0: # first label is the background
-            continue
-        else:
-            mask = (labels_img == label).astype(np.uint8) 
-            bitmap = potrace.Bitmap(mask.astype(bool))
-            path = bitmap.trace()
-            paths.append(path)
-
-    ### NEW VERSION of contour generation - publishes 3185 strokes
-    #contours, _ = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    ### OLD VERSION of contour generation - publishes 1872 strokes
+    #img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel
+    #num_labels, labels_img = cv.connectedComponents(img) # get the groups
     #paths = []
-    #for cnt in contours:
-    #    mask = np.zeros_like(img)
-    #    cv.drawContours(mask, [cnt], -1, color=255, thickness=cv.FILLED)
-    #    bitmap = potrace.Bitmap(mask.astype(bool))
-    #    path = bitmap.trace()
-    #    paths.append(path)
+    #for label in range(num_labels):
+    #    if label == 0: # first label is the background
+    #        continue
+    #    else:
+    #        mask = (labels_img == label).astype(np.uint8) 
+    #        bitmap = potrace.Bitmap(mask.astype(bool))
+    #        path = bitmap.trace()
+    #        paths.append(path)
+
+    ### NEW VERSION of contour generation - publishes 1762 strokes
+    contours, _ = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    paths = []
+    for cnt in contours:
+        mask = np.zeros_like(img)
+        cv.drawContours(mask, [cnt], -1, color=255, thickness=cv.FILLED)
+        bitmap = potrace.Bitmap(mask.astype(bool))
+        path = bitmap.trace()
+        paths.append(path)
     
     return paths
 
@@ -162,7 +161,7 @@ if __name__ == '__main__':
     # SHOWING OUTPUTS _________________________________________
     # Image
     cv.imshow('poster', poster)
-    cv.imwrite('test_images/poster.png',poster)
+    #cv.imwrite('test_images/poster.png',poster)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
