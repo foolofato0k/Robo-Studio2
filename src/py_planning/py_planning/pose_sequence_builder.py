@@ -1,59 +1,56 @@
 from geometry_msgs.msg import Pose, PoseArray
-from std_msgs.msg import Header
 from typing import List, Tuple
+from robo_da_vinci.lkh_utils import solve_stroke_order_py
 
-'''
-Class to plan a UR3 trajectory
-Input a list of strokes (list of tuples (x, y))
-Scale and Center (optional)
-Build pose array which will lift ur3 to a given height between strokes
-returns a geometry_msgs.Posearray
-'''
 class PoseSequenceBuilder:
-    def __init__(self, strokes: List[List[Tuple[float, float]]],):
-        self.original_strokes = strokes  # list of list of (x,y)
-        self.scaled_strokes = []
-    
-    def scale_and_center(self, target_width, target_height, center=(0.0,0.0),margin=0.02):
-        target_width = target_width - margin * 2
-        target_height = target_height - margin * 2
-        
-        # get all points in a single list
-        all_points = []
-        for stroke in self.original_strokes:
-            for point in stroke:
-                all_points.append(point)
+    @staticmethod
+    def optimise_path(strokes: List[List[Tuple[float, float]]]) -> List[List[Tuple[float, float]]]:
+        if not strokes:
+            raise ValueError("No strokes to optimize.")
 
-        if len(all_points) == 0:
-            return[]
-        
-        xs = []
-        ys = []
+        stroke_endpoints = []
+        for stroke in strokes:
+            #if len(stroke) < 2:
+            #    raise ValueError("Each stroke must have at least 2 points.")
+            x1, y1 = stroke[0]
+            x2, y2 = stroke[-1]
+            stroke_endpoints.append((x1, y1, x2, y2))
 
-        for point in all_points:
-            xs.append(point[0])
-            ys.append(point[1])
+        tsp_order = solve_stroke_order_py(stroke_endpoints)
 
-        min_x = min(xs)
-        max_x = max(xs)
-        min_y = min(ys)
-        max_y = max(ys)
+        optimized_strokes = []
+        for idx in tsp_order:
+            stroke = strokes[abs(idx)]
+            if idx < 0:
+                stroke = stroke[::-1]
+            optimized_strokes.append(stroke)
 
+        return optimized_strokes
+
+    @staticmethod
+    def scale_and_center(
+        strokes: List[List[Tuple[float, float]]],
+        target_width: float,
+        target_height: float,
+        center: Tuple[float, float] = (0.0, 0.0),
+        margin: float = 0.02
+    ) -> List[List[Pose]]:
+        if not strokes:
+            return []
+
+        target_width -= margin * 2
+        target_height -= margin * 2
+
+        all_points = [pt for stroke in strokes for pt in stroke]
+        xs, ys = zip(*all_points)
+
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
         width = max_x - min_x
         height = max_y - min_y
 
-        # Calculate scale factor
-        
-        if width > 0:
-            scale_x = target_width / width
-        else:
-            scale_x = 1.0
-        if height > 0:
-            scale_y = target_height / height
-        else:
-            scale_y = 1.0
-
-        # Scales to the largest dimension
+        scale_x = target_width / width if width > 0 else 1.0
+        scale_y = target_height / height if height > 0 else 1.0
         scale = min(scale_x, scale_y)
 
         x_center = (min_x + max_x) / 2
@@ -61,33 +58,31 @@ class PoseSequenceBuilder:
         x_offset = center[0] - x_center * scale
         y_offset = center[1] - y_center * scale
 
-        # Scale and translate poses
         scaled_strokes = []
-        for stroke in self.original_strokes:
+        for stroke in strokes:
             pose_stroke = []
-            for point in stroke:
-                x = point[0]
-                y = point[1]
-
+            for x, y in stroke:
                 pose = Pose()
                 pose.position.x = x * scale + x_offset
                 pose.position.y = y * scale + y_offset
-                # pose.position.z = draw_height  # this will be adjusted later
                 pose.orientation.w = 1.0
                 pose_stroke.append(pose)
-            self.scaled_strokes.append(pose_stroke)
-        return self.scaled_strokes
-    
+            scaled_strokes.append(pose_stroke)
 
+        return scaled_strokes
 
-    def build_pose_array(self, lift_height=0.15, draw_height=0.05):
-        final_plan = PoseArray()
+    @staticmethod
+    def build_pose_array(
+        scaled_strokes: List[List[Pose]],
+        lift_height: float = 0.15,
+        draw_height: float = 0.05
+    ) -> PoseArray:
+        if not scaled_strokes or not isinstance(scaled_strokes[0][0], Pose):
+            raise ValueError("Provide scaled strokes with Pose objects.")
 
-        if not self.scaled_strokes or not isinstance(self.scaled_strokes[0][0], Pose):
-            raise ValueError("Call scale_and_center() first to convert strokes to Pose objects.")
+        pose_array = PoseArray()
 
-        # Add initial overhead center pose
-        all_points = [pose for stroke in self.scaled_strokes for pose in stroke]
+        all_points = [p for stroke in scaled_strokes for p in stroke]
         if all_points:
             mean_x = sum(p.position.x for p in all_points) / len(all_points)
             mean_y = sum(p.position.y for p in all_points) / len(all_points)
@@ -97,53 +92,39 @@ class PoseSequenceBuilder:
             center_pose.position.y = mean_y
             center_pose.position.z = 0.2
             center_pose.orientation.w = 1.0
-            final_plan._poses.append(center_pose)
-            #final_plan.append(center_pose)
+            pose_array.poses.append(center_pose)
 
-        # Adjust and plan all the strokes
-        for stroke in self.scaled_strokes:
+        for stroke in scaled_strokes:
             if not stroke:
                 continue
 
             start = stroke[0]
             end = stroke[-1]
 
-            # Go to lifted start
             lifted_start = Pose()
             lifted_start.position.x = start.position.x
             lifted_start.position.y = start.position.y
             lifted_start.position.z = lift_height
             lifted_start.orientation.w = 1.0
-            #final_plan.append(lifted_start)
-            final_plan._poses.append(lifted_start)
+            pose_array.poses.append(lifted_start)
 
-            # Draw path
             for pose in stroke:
                 pose.position.z = draw_height
-                final_plan._poses.append(pose)
+                pose_array.poses.append(pose)
 
-                #final_plan.append(pose)
-
-            # Lift at end
             lifted_end = Pose()
             lifted_end.position.x = end.position.x
             lifted_end.position.y = end.position.y
             lifted_end.position.z = lift_height
             lifted_end.orientation.w = 1.0
-            final_plan._poses.append(lifted_end)
-            #final_plan.append(lifted_end)
+            pose_array.poses.append(lifted_end)
 
-        return final_plan 
-    
-    def print_pose_array(self, pose_array: PoseArray):
+        return pose_array
+
+    @staticmethod
+    def print_pose_array(pose_array: PoseArray):
         print("=== Pose Sequence ===")
         for i, pose in enumerate(pose_array.poses):
             pos = pose.position
-            orient = pose.orientation
-            #print(f"Pose {i}:")
             print(f"Pose {i}:  Position -> x: {pos.x:.4f}, y: {pos.y:.4f}, z: {pos.z:.4f}")
-            #print(f"  Orientation -> x: {orient.x:.4f}, y: {orient.y:.4f}, z: {orient.z:.4f}, w: {orient.w:.4f}")
         print("=====================")
- 
-
-    

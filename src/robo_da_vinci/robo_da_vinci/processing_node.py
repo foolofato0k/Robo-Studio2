@@ -54,28 +54,39 @@ class ProcessingNode(Node):
             paths = getPaths(poster)
             image_paths = tesselate(paths)
 
-            # CONSTRUCT PATH PLANNER
-            pose_builder = PoseSequenceBuilder(image_paths)
+            optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
+            opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.3))
+            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.3))
 
-            # SCALE TO A4 SIZE AND CENTER AT (0, 0.25)
-            pose_builder.scale_and_center(0.297,0.210,(0.1,0.3))
 
-            ####### TSP IN THE FUTURE TO-DO!!! #######
+            unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path)
+            optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path)
 
-            # PLAN PATH
-            stroke_plan = pose_builder.build_pose_array(0.2, 0.18)
+
+            # # CONSTRUCT PATH PLANNER
+            # pose_builder = PoseSequenceBuilder(image_paths)
+
+            # # SCALE TO A4 SIZE AND CENTER AT (0, 0.25)
+            # pose_builder.scale_and_center(0.297,0.210,(0.1,0.3))
+
+            # ####### TSP IN THE FUTURE TO-DO!!! #######
+            
+
+            # # PLAN PATH
+            # stroke_plan = pose_builder.build_pose_array(0.2, 0.18)
             
             # Plot poses in 3D
             if(True):
-                plot_3d_points(stroke_plan.poses)
+                plot_3d_points(unoptimised_stroke_plan.poses)
+                plot_3d_points(optimised_stroke_plan.poses)
 
             # Keep only the first 10 poses TESTING PURPOSES
             #stroke_plan.poses = stroke_plan.poses[:500]
 
-            pose_builder.print_pose_array(stroke_plan)
+            # pose_builder.print_pose_array(stroke_plan)
             # PUBLISH PATH
-            self.publisher_.publish(stroke_plan)
-            self.get_logger().info(f'Published {len(stroke_plan._poses)} strokes')
+            self.publisher_.publish(optimised_stroke_plan)
+            self.get_logger().info(f'Published {len(optimised_stroke_plan._poses)} strokes')
 
 
             self.photo_confirmed = False
