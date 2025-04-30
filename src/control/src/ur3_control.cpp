@@ -155,11 +155,14 @@ std::vector<geometry_msgs::msg::Pose> UR3Control::updateWaypointsForDrawing(
 			new_pose.position.z += offset_z;
 			// Set orientation for the end effector to face downward.
 			// This quaternion corresponds to a 180° rotation about the X-axis.
-            // NEW
-			new_pose.orientation.w = q.w();
-			new_pose.orientation.x = q.x();
-			new_pose.orientation.y = q.y();
-			new_pose.orientation.z = q.z();
+            
+			// NEW
+			// new_pose.orientation.w = q.w();
+			// new_pose.orientation.x = q.x();
+			// new_pose.orientation.y = q.y();
+			// new_pose.orientation.z = q.z();
+
+			new_pose.orientation = q;
 
             // OLD
             // new_pose.orientation.w = 0;

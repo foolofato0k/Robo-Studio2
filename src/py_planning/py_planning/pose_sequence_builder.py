@@ -74,8 +74,8 @@ class PoseSequenceBuilder:
     @staticmethod
     def build_pose_array(
         scaled_strokes: List[List[Pose]],
-        lift_height: float = 0.15,
-        draw_height: float = 0.05
+        lift_height: float = 0.2,
+        draw_height: float = 0.2
     ) -> PoseArray:
         if not scaled_strokes or not isinstance(scaled_strokes[0][0], Pose):
             raise ValueError("Provide scaled strokes with Pose objects.")
