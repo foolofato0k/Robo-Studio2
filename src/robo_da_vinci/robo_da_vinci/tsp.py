@@ -7,3 +7,5 @@ problem = lkh.LKHProblem.parse(problem_str)
 solver_path = 'LKH'
 solution = lkh.solve(solver_path, problem=problem, max_trials=5000, runs=10)
 print(solution)
+
+
