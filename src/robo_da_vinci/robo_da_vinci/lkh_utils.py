@@ -1,7 +1,7 @@
 # lkh_utils.py
 
 import os
-import lkh
+#import lkh
 import math
 import tempfile
 import subprocess

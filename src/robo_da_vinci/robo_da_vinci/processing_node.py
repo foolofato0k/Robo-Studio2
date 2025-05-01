@@ -54,13 +54,13 @@ class ProcessingNode(Node):
             paths = getPaths(poster)
             image_paths = tesselate(paths)
 
-            optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
-            opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.3))
-            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.3))
+            #optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
+            #opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.3))
+            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.35))
 
 
-            unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path)
-            optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path)
+            unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path,0.2,0.15)
+            #optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path)
 
 
             # # CONSTRUCT PATH PLANNER
@@ -78,15 +78,15 @@ class ProcessingNode(Node):
             # Plot poses in 3D
             if(True):
                 plot_3d_points(unoptimised_stroke_plan.poses)
-                plot_3d_points(optimised_stroke_plan.poses)
+                #plot_3d_points(optimised_stroke_plan.poses)
 
             # Keep only the first 10 poses TESTING PURPOSES
             #stroke_plan.poses = stroke_plan.poses[:500]
 
             # pose_builder.print_pose_array(stroke_plan)
             # PUBLISH PATH
-            self.publisher_.publish(optimised_stroke_plan)
-            self.get_logger().info(f'Published {len(optimised_stroke_plan._poses)} strokes')
+            self.publisher_.publish(unoptimised_stroke_plan)
+            self.get_logger().info(f'Published {len(unoptimised_stroke_plan._poses)} strokes')
 
 
             self.photo_confirmed = False
