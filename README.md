@@ -41,7 +41,6 @@ In root workspace
 To run the visualisation tests:
 Run the visual_testing/visual_tests.py file
 
-
 ## TO-DO:
 ### Control
 * Publish to a custom node when finished with the geometry/msgs.
@@ -49,5 +48,3 @@ Run the visual_testing/visual_tests.py file
 
 ### Planning
 * Make the planning more resiliant (move to a good planning location at the start)
-* Refactor the main planning class to make more sense
-* 

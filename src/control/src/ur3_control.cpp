@@ -138,6 +138,7 @@ std::vector<geometry_msgs::msg::Pose> UR3Control::updateWaypointsForDrawing(
 	tf2::Quaternion q;
 	// q.setRPY(rx,ry, rz);
     q.setRPY(roll, pitch, yaw);
+    
 
 
 	for (const auto& pose : original_waypoints)
@@ -162,7 +163,6 @@ std::vector<geometry_msgs::msg::Pose> UR3Control::updateWaypointsForDrawing(
 			// new_pose.orientation.y = q.y();
 			// new_pose.orientation.z = q.z();
 
-			new_pose.orientation = q;
 
             // OLD
             // new_pose.orientation.w = 0;
