@@ -68,8 +68,6 @@ class ProcessingNode(Node):
 
             # # SCALE TO A4 SIZE AND CENTER AT (0, 0.25)
             # pose_builder.scale_and_center(0.297,0.210,(0.1,0.3))
-
-            # ####### TSP IN THE FUTURE TO-DO!!! #######
             
 
             # # PLAN PATH

@@ -30,8 +30,8 @@ class PoseSequenceBuilder:
     @staticmethod
     def scale_and_center(
         strokes: List[List[Tuple[float, float]]],
-        target_width: float,
-        target_height: float,
+        target_width: float = (0.297),
+        target_height: float = (0.210),
         center: Tuple[float, float] = (0.0, 0.0),
         margin: float = 0.02
     ) -> List[List[Pose]]:
