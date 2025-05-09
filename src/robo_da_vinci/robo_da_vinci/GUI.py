@@ -1,308 +1,268 @@
+#!/usr/bin/env python3
+
 import cv2
 import tkinter as tk
-from tkinter import ttk  # For dropdown and progress bar
+from tkinter import ttk
 from PIL import Image, ImageTk
 import numpy as np
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Bool
+import platform
+import time
+import os
 
-# Create the main window
-root = tk.Tk()
-root.title("Live Camera Feed with Contours")
-root.geometry("1440x800")  # Adjusted window size for proper spacing
-root.configure(bg="black")  # Set background to black
-root.resizable(False, False)  # Make the window non-resizable
+class PhotoGUI:
+    def __init__(self, publish_callback):
+        self.publish_callback = publish_callback
+        self.root = tk.Tk()
+        self.root.title("Live Camera Feed with Contours")
+        self.root.geometry("1440x800")
+        self.root.configure(bg="black")
+        self.root.resizable(False, False)
 
-# Open the webcam (0 = default camera)
-cap = cv2.VideoCapture(0)
+        self.cap = self.find_working_camera()
+        if self.cap is None:
+            raise RuntimeError("No accessible webcam found. Please check your device.")
 
-# Set fixed dimensions for the video feeds
-VIDEO_WIDTH = 640
-VIDEO_HEIGHT = 480
-BORDER_SIZE = 20  # White border thickness
+        self.VIDEO_WIDTH = 640
+        self.VIDEO_HEIGHT = 480
+        self.BORDER_SIZE = 20
 
-# Style for dropdowns
-style = ttk.Style()
-style.configure("TCombobox", font=("Arial", 14))  # Increase font size
+        # UI Elements
+        tk.Label(self.root, text="Live Camera", font=("Arial",14,"bold"), fg="black", bg="white", width=15).place(x=350, y=31, anchor="center")
+        tk.Label(self.root, text="Processed Image", font=("Arial",14,"bold"), fg="black", bg="white", width=15).place(x=1075, y=31, anchor="center")
+        tk.Frame(self.root, width=self.VIDEO_WIDTH+self.BORDER_SIZE, height=self.VIDEO_HEIGHT+self.BORDER_SIZE, bg="white").place(x=40, y=45)
+        tk.Frame(self.root, width=self.VIDEO_WIDTH+self.BORDER_SIZE, height=self.VIDEO_HEIGHT+self.BORDER_SIZE, bg="white").place(x=740, y=45)
 
-# Title labels above video feeds
-title_live = tk.Label(root, text="Live Camera", font=("Arial", 14, "bold"), fg="black", bg="white", width=15)
-title_live.place(x=350, y=31, anchor="center")
+        self.label_normal = tk.Label(self.root, bg="black", width=self.VIDEO_WIDTH, height=self.VIDEO_HEIGHT)
+        self.label_normal.place(x=50, y=55)
+        self.label_contours = tk.Label(self.root, bg="black", width=self.VIDEO_WIDTH, height=self.VIDEO_HEIGHT)
+        self.label_contours.place(x=750, y=55)
 
-title_processed = tk.Label(root, text="Processed Image", font=("Arial", 14, "bold"), fg="black", bg="white", width=15)
-title_processed.place(x=1075, y=31, anchor="center")
+        self.countdown_label = tk.Label(self.root, text="", font=("Arial",30,"bold"), fg="red", bg="black")
+        self.countdown_label.place_forget()
 
-# Create white border frames for both feeds
-frame_border_live = tk.Frame(root, width=VIDEO_WIDTH + BORDER_SIZE, height=VIDEO_HEIGHT + BORDER_SIZE, bg="white")
-frame_border_live.place(x=40, y=45)  # Left feed with border
+        self.selected_timer = tk.StringVar(value="None")
+        timer_dropdown = ttk.Combobox(self.root, textvariable=self.selected_timer,
+                                      values=["None","3s","5s","10s"], state="readonly",
+                                      font=("Arial",12), width=10)
+        timer_dropdown.place(x=350, y=700, anchor="center")
+        tk.Label(self.root, text="Countdown Timer", font=("Arial",14,"bold"), fg="red", bg="black").place(x=350, y=675, anchor="center")
 
-frame_border_processed = tk.Frame(root, width=VIDEO_WIDTH + BORDER_SIZE, height=VIDEO_HEIGHT + BORDER_SIZE, bg="white")
-frame_border_processed.place(x=740, y=45)  # Right feed with border
+        self.selected_style = tk.StringVar(value="None")
+        style_dropdown = ttk.Combobox(self.root, textvariable=self.selected_style,
+                                      values=["None","Wanted","Style 2","Style 3","Style 4"],
+                                      state="readonly", font=("Arial",15), width=10)
+        style_dropdown.place(x=1075, y=630, anchor="center")
+        style_dropdown.bind("<<ComboboxSelected>>", self.update_style_label)
+        self.style_label = tk.Label(self.root, text=f"Chosen Style: {self.selected_style.get()}",
+                                    font=("Arial",14,"bold"), fg="red", bg="black")
+        self.style_label.place(x=1075, y=590, anchor="center")
 
-# Labels for displaying the camera feeds
-label_normal = tk.Label(root, bg="black", width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
-label_normal.place(x=50, y=55)  # Left: Normal feed
+        self.button_take_photo = tk.Button(self.root, text="Take Photo", font=("Arial",25,"bold"),
+                                           fg="red", bg="white", command=self.start_timer)
+        self.button_take_photo.place(x=350, y=600, anchor="center")
 
-label_contours = tk.Label(root, bg="black", width=VIDEO_WIDTH, height=VIDEO_HEIGHT)
-label_contours.place(x=750, y=55)  # Right: Contour feed
+        self.progress_label = tk.Label(self.root, text="", font=("Arial",14,"bold"), fg="white", bg="black")
+        self.progress_percentage_label = tk.Label(self.root, text="0%", font=("Arial",14,"bold"), fg="white", bg="black")
+        style = ttk.Style()
+        style.configure("green.Horizontal.TProgressbar", foreground="green", background="green")
+        self.progress_bar = ttk.Progressbar(self.root, orient="horizontal", length=400,
+                                            mode="determinate", style="green.Horizontal.TProgressbar")
 
-# Timer countdown label (Hidden initially)
-countdown_label = tk.Label(root, text="", font=("Arial", 30, "bold"), fg="red", bg="black")
-countdown_label.place(x=640, y=550, anchor="center")
-countdown_label.place_forget()  # Hide initially
+        self.yes_button = tk.Button(self.root, text="Yes", font=("Arial",14,"bold"), fg="white", bg="green",
+                                    width=10, command=self.confirm_photo)
+        self.no_button = tk.Button(self.root, text="No", font=("Arial",14,"bold"), fg="white", bg="red",
+                                   width=10, command=self.retake_photo)
+        self.yes_button.place_forget()
+        self.no_button.place_forget()
 
-# Create progress bar labels
-progress_label = tk.Label(root, text="", font=("Arial", 14, "bold"), fg="white", bg="black")  # Text above progress bar
-progress_percentage_label = tk.Label(root, text="0%", font=("Arial", 14, "bold"), fg="white", bg="black")  # Percentage below bar
+        self.is_frozen = False
+        self.frozen_frame = None
 
-# Progress bar itself
-progress_bar = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate", style="green.Horizontal.TProgressbar")
+        self.update_frame()
 
-# Style for green progress bar
-style = ttk.Style()
-style.configure("green.Horizontal.TProgressbar", foreground="green", background="green")
+    def find_working_camera(self):
+        is_linux = platform.system() == 'Linux'
+        for index in range(5):
+            device = f"/dev/video{index}" if is_linux else index
+            if is_linux:
+                cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
+                cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            else:
+                cap = cv2.VideoCapture(device)
+            time.sleep(1)
+            if cap.isOpened():
+                ret, frame = cap.read()
+                if ret:
+                    print(f"[INFO] Camera opened successfully: {device}")
+                    return cap
+            cap.release()
+        print("❌ No compatible camera found.")
+        return None
 
-# Dropdown for countdown timer
-timer_options = ["None", "3s", "5s", "10s"]
-selected_timer = tk.StringVar(value="None")
-# Countdown Timer Dropdown (Bigger size)
-timer_dropdown = ttk.Combobox(root, textvariable=selected_timer, values=timer_options, state="readonly", font=("Arial", 12), width=10)
-timer_dropdown.place(x=350, y=700, anchor="center")
+    def update_style_label(self, event=None):
+        self.style_label.config(text=f"Chosen Style: {self.selected_style.get()}")
 
-# Dropdown for style selection
-style_options = ["None", "Wanted", "Style 2", "Style 3", "Style 4"] 
-selected_style = tk.StringVar(value="None")  # Default value is "None"
+    def process_frame(self, frame):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (5,5), 0)
+        edges = cv2.Canny(blurred, 50, 150)
+        contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contour_img = np.zeros_like(frame)
+        cv2.drawContours(contour_img, contours, -1, (255,255,0), 2)
+        return contour_img
 
-# Style text display
-style_label = tk.Label(root, text="Chosen Style: ", font=("Arial", 14, "bold"), fg="red", bg="black")
-style_label.place(x=1075, y=590, anchor="center")
+    def update_frame(self):
+        if not self.is_frozen:
+            ret, frame = self.cap.read()
+            if ret:
+                frame = cv2.resize(frame, (self.VIDEO_WIDTH, self.VIDEO_HEIGHT))
+                contour_frame = self.process_frame(frame.copy())
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                img = ImageTk.PhotoImage(Image.fromarray(rgb))
+                self.label_normal.imgtk = img
+                self.label_normal.config(image=img)
+                rgb_c = cv2.cvtColor(contour_frame, cv2.COLOR_BGR2RGB)
+                img_c = ImageTk.PhotoImage(Image.fromarray(rgb_c))
+                self.label_contours.imgtk = img_c
+                self.label_contours.config(image=img_c)
+        self.root.after(10, self.update_frame)
 
-# Function to update the chosen style label dynamically
-def update_style_label(event=None):
-    """Updates the 'Chosen Style' label based on dropdown selection."""
-    style_label.config(text=f"Chosen Style: {selected_style.get()}")
-
-# Style Selection Dropdown (Bigger size)
-style_dropdown = ttk.Combobox(root, textvariable=selected_style, values=style_options, state="readonly", font=("Arial", 15), width=10)
-style_dropdown.place(x=1075, y=630, anchor="center")
-style_dropdown.bind("<<ComboboxSelected>>", update_style_label)  # Trigger label update on selection
-
-# Style text display (Default set to "None")
-style_label = tk.Label(root, text=f"Chosen Style: {selected_style.get()}", font=("Arial", 14, "bold"), fg="red", bg="black")
-style_label.place(x=1075, y=590, anchor="center")
-
-# Countdown text display
-countdown_title_label = tk.Label(root, text="Countdown Timer", font=("Arial", 14, "bold"), fg="red", bg="black")
-countdown_title_label.place(x=350, y=675, anchor="center")
-
-# Take Photo Button
-button_take_photo = tk.Button(root, text="Take Photo", font=("Arial", 25, "bold"), fg="red", bg="white", command=lambda: start_timer())
-button_take_photo.place(x=350, y=600, anchor="center")
-
-
-# Variable to track if we're showing a frozen frame
-is_frozen = False
-frozen_frame = None  # Store the captured frame
-
-def process_frame(frame):
-    """Applies contour detection on the frame."""
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edges = cv2.Canny(blurred, 50, 150)
-
-    # Find contours
-    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
-    # Draw contours on a black image
-    contour_image = np.zeros_like(frame)
-    cv2.drawContours(contour_image, contours, -1, (255, 255, 0), 2)  # Cyan contours
-
-    return contour_image
-
-def update_frame():
-    """Capture frame from webcam and update the labels."""
-    global is_frozen, frozen_frame
-    if not is_frozen:
-        ret, frame = cap.read()
-        if ret:
-            frame = cv2.resize(frame, (VIDEO_WIDTH, VIDEO_HEIGHT))  # Ensure consistent size
-            contour_frame = process_frame(frame.copy())
-
-            # Convert normal feed to Tkinter image
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            img_normal = Image.fromarray(frame)
-            imgtk_normal = ImageTk.PhotoImage(image=img_normal)
-            
-            # Convert contour feed to Tkinter image
-            contour_frame = cv2.cvtColor(contour_frame, cv2.COLOR_BGR2RGB)
-            img_contour = Image.fromarray(contour_frame)
-            imgtk_contour = ImageTk.PhotoImage(image=img_contour)
-
-            # Update labels with the images
-            label_normal.imgtk = imgtk_normal
-            label_normal.config(image=imgtk_normal)
-
-            label_contours.imgtk = imgtk_contour
-            label_contours.config(image=imgtk_contour)
-
-    label_normal.after(10, update_frame)
-
-def start_timer():
-    """Starts countdown timer if needed, otherwise shows 'Say Cheese' and takes photo."""
-    global is_frozen
-    button_take_photo.config(state=tk.DISABLED)  # Disable button to prevent multiple presses
-
-    timer_value = selected_timer.get()
-
-    if timer_value == "None":
-        # No countdown, just display "Say" and "Cheese!!!" before taking the photo
-        countdown_label.config(text="Say\nCheese!!!", font=("Arial", 30, "bold"))
-        countdown_label.place(x=720, y=600, anchor="center")  # Show label in the center
-
-        # Hide text and take photo after 2 seconds
-        root.after(2000, lambda: countdown_label.place_forget())
-        root.after(2000, take_photo)
-    else:
-        # Extract the countdown time (convert "3s" -> 3)
-        countdown_seconds = int(timer_value.replace("s", ""))  
-        countdown(countdown_seconds)
-
-def countdown(seconds):
-    """Displays countdown and calls take_photo() when finished."""
-    if seconds > 0:
-        countdown_label.config(text=str(seconds), font=("Arial", 50, "bold"))  # Increase font size
-        countdown_label.place(x=720, y=600, anchor="center")  # Show countdown
-        root.after(1000, countdown, seconds - 1)
-    else:
-        # After countdown finishes or if timer is "None", display "Say" and "Cheese!!!" below it
-        countdown_label.config(text="Say\nCheese!!!", font=("Arial", 30, "bold"))
-        countdown_label.place(x=720, y=600, anchor="center")  # Reposition if needed
-
-        # Wait 1 seconds, then hide the text and take the photo
-        root.after(1000, lambda: countdown_label.place_forget())
-        root.after(1000, take_photo)
-
-def take_photo():
-    """Capture a frame, freeze the images, and ask for confirmation before progress bar."""
-    global is_frozen, frozen_frame
-    ret, frame = cap.read()
-    if ret:
-        is_frozen = True
-        frozen_frame = cv2.resize(frame, (VIDEO_WIDTH, VIDEO_HEIGHT))
-
-        # Process contour detection on the frozen frame
-        contour_frame = process_frame(frozen_frame.copy())
-
-        # Convert to Tkinter images
-        frozen_frame = cv2.cvtColor(frozen_frame, cv2.COLOR_BGR2RGB)
-        img_normal = Image.fromarray(frozen_frame)
-        imgtk_normal = ImageTk.PhotoImage(image=img_normal)
-
-        contour_frame = cv2.cvtColor(contour_frame, cv2.COLOR_BGR2RGB)
-        img_contour = Image.fromarray(contour_frame)
-        imgtk_contour = ImageTk.PhotoImage(image=img_contour)
-
-        # Show frozen images
-        label_normal.imgtk = imgtk_normal
-        label_normal.config(image=imgtk_normal)
-
-        label_contours.imgtk = imgtk_contour
-        label_contours.config(image=imgtk_contour)
-
-        # Ask for confirmation before showing progress bar
-        countdown_label.config(text="Are You Happy\n With Your Photo?", font=("Arial", 20, "bold"))
-        countdown_label.place(x=720, y=600, anchor="center")
-
-        # Show the Yes/No buttons
-        yes_button.place(x=650, y=650, anchor="center")
-        no_button.place(x=790, y=650, anchor="center")
-
-def confirm_photo():
-    """User confirms they are happy with the photo -> Show progress bar."""
-    # Hide confirmation message and buttons
-    countdown_label.place_forget()
-    yes_button.place_forget()
-    no_button.place_forget()
-
-    # Show progress bar with labels
-    progress_label.place(x=720, y=660, anchor="center")  # Text above bar
-    progress_bar.place(x=720, y=700, anchor="center")  # Progress bar
-    progress_percentage_label.place(x=720, y=740, anchor="center")  # Percentage below bar
-
-    progress_bar["value"] = 0
-    update_progress(0)
-
-def retake_photo():
-    """User is not happy with the photo -> Reset and return to live feed."""
-    global is_frozen
-    is_frozen = False  # Resume live feed
-
-    # Hide confirmation message and buttons
-    countdown_label.place_forget()
-    yes_button.place_forget()
-    no_button.place_forget()
-
-    button_take_photo.config(state=tk.NORMAL)  # Re-enable "Take Photo" button
-
-def blink_completed_text(times):
-    """Blink 'COMPLETED' text every second for 6 seconds."""
-    if times > 0:
-        # Toggle visibility by checking current text
-        if progress_label.cget("text") == "COMPLETED":
-            progress_label.config(text="")  # Hide text
+    def start_timer(self):
+        self.button_take_photo.config(state=tk.DISABLED)
+        timer = self.selected_timer.get()
+        if timer == "None":
+            self.countdown_label.config(text="Say\nCheese!!!")
+            self.countdown_label.place(x=720, y=600, anchor="center")
+            self.root.after(2000, lambda: self.countdown_label.place_forget())
+            self.root.after(2000, self.take_photo)
         else:
-            progress_label.config(text="COMPLETED")  # Show text
+            secs = int(timer.replace("s",""))
+            self.countdown(secs)
 
-        # Call itself every second, reducing blink count
-        root.after(1000, lambda: blink_completed_text(times - 1))
-    else:
-        resume_live_feed()  # After blinking for 6 seconds, hide progress bar
-        
-def update_progress(value):
-    """Update the progress bar over 12 seconds with different labels."""
-    if value <= 100:
-        progress_bar["value"] = value
+    def countdown(self, secs):
+        if secs > 0:
+            self.countdown_label.config(text=str(secs), font=("Arial",50,"bold"))
+            self.countdown_label.place(x=720, y=600, anchor="center")
+            self.root.after(1000, lambda: self.countdown(secs-1))
+        else:
+            self.countdown_label.config(text="Say\nCheese!!!")
+            self.countdown_label.place(x=720, y=600, anchor="center")
+            self.root.after(1000, lambda: self.countdown_label.place_forget())
+            self.root.after(1000, self.take_photo)
 
-        # Change label text based on progress duration
-        if value < 33:  # First 4 seconds
-            progress_label.config(text="Processing Image...", fg="white")
-        elif value < 66:  # Next 4 seconds
-            progress_label.config(text="Path Planning...", fg="white")
-        else:  # Last 4 seconds
-            progress_label.config(text="Drawing...", fg="white")
+    def take_photo(self):
+        ret, frame = self.cap.read()
+        if not ret:
+            return
+        self.is_frozen = True
+        frame = cv2.resize(frame, (self.VIDEO_WIDTH, self.VIDEO_HEIGHT))
+        self.frozen_frame = frame.copy()  # ✅ Store live photo
+        contour_frame = self.process_frame(frame.copy())
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        img = ImageTk.PhotoImage(Image.fromarray(rgb))
+        self.label_normal.imgtk = img
+        self.label_normal.config(image=img)
+        rgb_c = cv2.cvtColor(contour_frame, cv2.COLOR_BGR2RGB)
+        img_c = ImageTk.PhotoImage(Image.fromarray(rgb_c))
+        self.label_contours.imgtk = img_c
+        self.label_contours.config(image=img_c)
+        self.countdown_label.config(text="Are You Happy\nWith Your Photo?", font=("Arial",20,"bold"))
+        self.countdown_label.place(x=720, y=600, anchor="center")
+        self.yes_button.place(x=650, y=650, anchor="center")
+        self.no_button.place(x=790, y=650, anchor="center")
 
-        # Update percentage label below progress bar
-        progress_percentage_label.config(text=f"{value}%")
-
-        # Increase progress in 1% steps every 120ms (12 seconds total)
-        root.after(120, update_progress, value + 1)
+    def confirm_photo(self):
+        self.publish_callback()
     
-    else:
-        # Once the progress reaches 100%, show "Completed" and trigger blinking effect
-        progress_label.config(text="COMPLETED", fg="green")
-        root.after(500, lambda: blink_completed_text(6))  # Blink for 6 seconds before hiding
+        # # ✅ Save image to same folder as this script
+        # script_dir = os.path.dirname(os.path.abspath(__file__))
+        # save_path = os.path.join(script_dir, "webcam_img.jpg")
+    
+        # if self.frozen_frame is not None:
+        #     cv2.imwrite(save_path, self.frozen_frame)
+        #     print(f"[INFO] Saved captured image to: {save_path}")
+        # else:
+        #     print("[WARN] No frozen frame to save.")
+    
+        self.countdown_label.place_forget()
+        self.yes_button.place_forget()
+        self.no_button.place_forget()
+        self.button_take_photo.config(state=tk.NORMAL)
+        self.show_progress()
 
-def resume_live_feed():
-    """Unfreeze the live feed and hide progress elements."""
-    global is_frozen
-    is_frozen = False
-    progress_bar.place_forget()
-    progress_label.place_forget()
-    progress_percentage_label.place_forget()  # Hide percentage when done
 
-    button_take_photo.config(state=tk.NORMAL)  # Re-enable "Take Photo" button
+    def retake_photo(self):
+        self.is_frozen = False
+        self.countdown_label.place_forget()
+        self.yes_button.place_forget()
+        self.no_button.place_forget()
+        self.button_take_photo.config(state=tk.NORMAL)
 
-# Create Yes/No buttons for photo confirmation (initially hidden)
-yes_button = tk.Button(root, text="Yes", font=("Arial", 14, "bold"), fg="white", bg="green", width=10, command=confirm_photo)
-yes_button.place_forget()
+    def show_progress(self):
+        self.progress_label.place(x=720, y=660, anchor="center")
+        self.progress_bar.place(x=720, y=700, anchor="center")
+        self.progress_percentage_label.place(x=720, y=740, anchor="center")
+        self.progress_bar['value'] = 0
+        self.update_progress(0)
 
-no_button = tk.Button(root, text="No", font=("Arial", 14, "bold"), fg="white", bg="red", width=10, command=retake_photo)
-no_button.place_forget()
+    def update_progress(self, val):
+        if val <= 100:
+            self.progress_bar['value'] = val
+            if val < 33:
+                self.progress_label.config(text="Processing Image...", fg="white")
+            elif val < 66:
+                self.progress_label.config(text="Path Planning...", fg="white")
+            else:
+                self.progress_label.config(text="Drawing...", fg="white")
+            self.progress_percentage_label.config(text=f"{val}%")
+            self.root.after(120, self.update_progress, val+1)
+        else:
+            self.progress_label.config(text="COMPLETED", fg="green")
+            self.root.after(500, lambda: self.blink_completed(6))
 
-# Start updating frames
-update_frame()
+    def blink_completed(self, times):
+        if times > 0:
+            text = self.progress_label.cget("text")
+            self.progress_label.config(text="" if text=="COMPLETED" else "COMPLETED")
+            self.root.after(1000, lambda: self.blink_completed(times-1))
+        else:
+            self.resume_live()
 
-# Run Tkinter loop
-root.mainloop()
+    def resume_live(self):
+        self.is_frozen = False
+        self.progress_bar.place_forget()
+        self.progress_label.place_forget()
+        self.progress_percentage_label.place_forget()
+        self.button_take_photo.config(state=tk.NORMAL)
 
-cap.release()
-cv2.destroyAllWindows()
+    def run(self):
+        self.root.mainloop()
+        self.cap.release()
 
+class PhotoPublisherNode(Node):
+    def __init__(self):
+        super().__init__('photo_publisher')
+        self.pub = self.create_publisher(Bool, 'photo_confirmed', 10)
+        self.gui = PhotoGUI(self.publish_confirmation)
+
+    def publish_confirmation(self):
+        msg = Bool()
+        msg.data = True
+        self.pub.publish(msg)
+        self.get_logger().info('Published photo_confirmed: True')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = PhotoPublisherNode()
+    node.gui.run()
+    rclpy.spin_once(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
