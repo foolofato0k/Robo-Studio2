@@ -8,4 +8,5 @@
 *.tmp
 .env
 .vscode/
-.idea/
+.idea/__pycache__/
+*.py[cod]
