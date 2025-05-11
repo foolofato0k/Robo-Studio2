@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import cv2
 import tkinter as tk
 from tkinter import ttk
@@ -177,24 +175,29 @@ class PhotoGUI:
         self.no_button.place(x=790, y=650, anchor="center")
 
     def confirm_photo(self):
+        # Publish the confirmation message
         self.publish_callback()
-    
-        # # ✅ Save image to same folder as this script
-        # script_dir = os.path.dirname(os.path.abspath(__file__))
-        # save_path = os.path.join(script_dir, "webcam_img.jpg")
-    
-        # if self.frozen_frame is not None:
-        #     cv2.imwrite(save_path, self.frozen_frame)
-        #     print(f"[INFO] Saved captured image to: {save_path}")
-        # else:
-        #     print("[WARN] No frozen frame to save.")
-    
+
+        # Save the frozen frame to the image_processing/test_images folder
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        # script_dir is .../robo_da_vinci/robo_da_vinci/gui
+        save_dir = os.path.normpath(
+            os.path.join(script_dir, '..', 'image_processing', 'test_images')
+        )
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, 'webcam_img.jpg')
+        if self.frozen_frame is not None:
+            cv2.imwrite(save_path, self.frozen_frame)
+            print(f"[INFO] Saved captured image to: {save_path}")
+        else:
+            print("[WARN] No frozen frame to save.")
+
+        # Reset the GUI and show processing progress
         self.countdown_label.place_forget()
         self.yes_button.place_forget()
         self.no_button.place_forget()
         self.button_take_photo.config(state=tk.NORMAL)
         self.show_progress()
-
 
     def retake_photo(self):
         self.is_frozen = False

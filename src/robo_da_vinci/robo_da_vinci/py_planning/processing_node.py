@@ -23,7 +23,8 @@ class ProcessingNode(Node):
         self.timer_ = self.create_timer(1.0, self.main_loop)
 
         # Loop variables
-        self.photo_confirmed = True
+        # only start processing after we receive True
+        self.photo_confirmed = False   
 
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data
@@ -64,7 +65,7 @@ class ProcessingNode(Node):
 
             #optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
             #opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.3))
-            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.35))
+            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.3))
 
 
             unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path,0.2,0.15)
@@ -95,6 +96,7 @@ class ProcessingNode(Node):
             self.get_logger().info(f'Published {len(unoptimised_stroke_plan._poses)} strokes')
 
 
+            # reset until next confirmation
             self.photo_confirmed = False
 
 
