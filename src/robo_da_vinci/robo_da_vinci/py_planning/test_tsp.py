@@ -1,5 +1,5 @@
 import random
-from robo_da_vinci.lkh_utils import solve_stroke_order_py
+from robo_da_vinci.py_planning.lkh_utils import solve_stroke_order_py
 import matplotlib.pyplot as plt
 
 def generate_fake_strokes(num_strokes=30, canvas_size=(1000, 1000), seed=None):

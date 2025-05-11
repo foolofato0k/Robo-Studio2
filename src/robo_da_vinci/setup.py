@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'processing_node = robo_da_vinci.processing_node:main'
+            'processing_node = robo_da_vinci.py_planning.processing_node:main',
+            'gui_node        = robo_da_vinci.gui.gui_node:main'
         ],
     },
 )

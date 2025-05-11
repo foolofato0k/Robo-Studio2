@@ -1,8 +1,13 @@
-
 from geometry_msgs.msg import Pose
-from py_planning.pose_planner_node import PoseSequenceBuilder
-from py_planning.visual_utils import plot_2d_points, plot_3d_points
 
+# was: from py_planning.pose_planner_node import PoseSequenceBuilder
+from robo_da_vinci.py_planning.pose_sequence_builder import PoseSequenceBuilder
+
+# was: from py_planning.visual_utils import plot_2d_points, plot_3d_points
+from robo_da_vinci.py_planning.visual_testing.visual_utils import (
+    plot_2d_points,
+    plot_3d_points
+)
 def test_single_line_visualisation():
     builder = PoseSequenceBuilder(lift_height=0.2, draw_height=0.05)
 

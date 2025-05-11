@@ -1,13 +1,16 @@
-from py_planning.pose_sequence_builder import PoseSequenceBuilder
-from robo_da_vinci.img_processor import WebcamImg, detectFaceEdges, getPaths, tesselate
-from py_planning.visual_utils import plot_3d_points
+from robo_da_vinci.py_planning.pose_sequence_builder import PoseSequenceBuilder
+from robo_da_vinci.py_planning.visual_testing.visual_utils import plot_3d_points
+from robo_da_vinci.image_processing.img_processor import (
+    WebcamImg, detectFaceEdges, getPaths, tesselate
+)
+
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Pose, PoseArray
+from geometry_msgs.msg import PoseArray
 from std_msgs.msg import Bool
+
 import cv2 as cv
 import os
-
 
 class ProcessingNode(Node):
 
@@ -41,13 +44,18 @@ class ProcessingNode(Node):
                 if image == None:
                     exit()
             else:
-                script_dir = os.path.dirname(os.path.realpath(__file__))
-                image_path = os.path.join(script_dir, 'test_images', 'webcam_img.jpg')
+                script_dir = os.path.dirname(os.path.realpath(__file__))            # …/robo_da_vinci/py_planning
+                image_path = os.path.abspath(os.path.join(
+                    script_dir,
+                    '..',                       # go up into robo_da_vinci/robo_da_vinci
+                    'image_processing',
+                    'test_images',
+                    'webcam_img.jpg'
+                ))
                 image = cv.imread(image_path)
-
-            if image is None:
-                print("Failed to load image. Check the path: test_images/webcam_img.jpg")
-                exit()
+                if image is None:
+                    self.get_logger().error(f"Failed to load image: {image_path}")
+                    exit()
 
             # PROCESSING EDGES ________________________________________
             poster = detectFaceEdges(image)
