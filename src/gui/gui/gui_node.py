@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-import threading
 import cv2
 import tkinter as tk
 from tkinter import ttk
@@ -9,6 +6,9 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool
+import platform
+import time
+import os
 
 class PhotoGUI:
     def __init__(self, publish_callback):
@@ -19,32 +19,28 @@ class PhotoGUI:
         self.root.configure(bg="black")
         self.root.resizable(False, False)
 
-        # Video capture settings
-        self.cap = cv2.VideoCapture(0)
+        self.cap = self.find_working_camera()
+        if self.cap is None:
+            raise RuntimeError("No accessible webcam found. Please check your device.")
+
         self.VIDEO_WIDTH = 640
         self.VIDEO_HEIGHT = 480
         self.BORDER_SIZE = 20
 
-        # ----- UI COMPONENTS -----
-        # Titles
+        # UI Elements
         tk.Label(self.root, text="Live Camera", font=("Arial",14,"bold"), fg="black", bg="white", width=15).place(x=350, y=31, anchor="center")
         tk.Label(self.root, text="Processed Image", font=("Arial",14,"bold"), fg="black", bg="white", width=15).place(x=1075, y=31, anchor="center")
-
-        # White borders
         tk.Frame(self.root, width=self.VIDEO_WIDTH+self.BORDER_SIZE, height=self.VIDEO_HEIGHT+self.BORDER_SIZE, bg="white").place(x=40, y=45)
         tk.Frame(self.root, width=self.VIDEO_WIDTH+self.BORDER_SIZE, height=self.VIDEO_HEIGHT+self.BORDER_SIZE, bg="white").place(x=740, y=45)
 
-        # Video labels
         self.label_normal = tk.Label(self.root, bg="black", width=self.VIDEO_WIDTH, height=self.VIDEO_HEIGHT)
         self.label_normal.place(x=50, y=55)
         self.label_contours = tk.Label(self.root, bg="black", width=self.VIDEO_WIDTH, height=self.VIDEO_HEIGHT)
         self.label_contours.place(x=750, y=55)
 
-        # Countdown label
         self.countdown_label = tk.Label(self.root, text="", font=("Arial",30,"bold"), fg="red", bg="black")
         self.countdown_label.place_forget()
 
-        # Timer dropdown
         self.selected_timer = tk.StringVar(value="None")
         timer_dropdown = ttk.Combobox(self.root, textvariable=self.selected_timer,
                                       values=["None","3s","5s","10s"], state="readonly",
@@ -52,7 +48,6 @@ class PhotoGUI:
         timer_dropdown.place(x=350, y=700, anchor="center")
         tk.Label(self.root, text="Countdown Timer", font=("Arial",14,"bold"), fg="red", bg="black").place(x=350, y=675, anchor="center")
 
-        # Style dropdown
         self.selected_style = tk.StringVar(value="None")
         style_dropdown = ttk.Combobox(self.root, textvariable=self.selected_style,
                                       values=["None","Wanted","Style 2","Style 3","Style 4"],
@@ -63,12 +58,10 @@ class PhotoGUI:
                                     font=("Arial",14,"bold"), fg="red", bg="black")
         self.style_label.place(x=1075, y=590, anchor="center")
 
-        # Take Photo button
         self.button_take_photo = tk.Button(self.root, text="Take Photo", font=("Arial",25,"bold"),
                                            fg="red", bg="white", command=self.start_timer)
         self.button_take_photo.place(x=350, y=600, anchor="center")
 
-        # Progress bar and labels
         self.progress_label = tk.Label(self.root, text="", font=("Arial",14,"bold"), fg="white", bg="black")
         self.progress_percentage_label = tk.Label(self.root, text="0%", font=("Arial",14,"bold"), fg="white", bg="black")
         style = ttk.Style()
@@ -76,7 +69,6 @@ class PhotoGUI:
         self.progress_bar = ttk.Progressbar(self.root, orient="horizontal", length=400,
                                             mode="determinate", style="green.Horizontal.TProgressbar")
 
-        # Yes/No buttons
         self.yes_button = tk.Button(self.root, text="Yes", font=("Arial",14,"bold"), fg="white", bg="green",
                                     width=10, command=self.confirm_photo)
         self.no_button = tk.Button(self.root, text="No", font=("Arial",14,"bold"), fg="white", bg="red",
@@ -84,12 +76,31 @@ class PhotoGUI:
         self.yes_button.place_forget()
         self.no_button.place_forget()
 
-        # Internal state
         self.is_frozen = False
         self.frozen_frame = None
 
-        # Start the frame update loop
         self.update_frame()
+
+    def find_working_camera(self):
+        is_linux = platform.system() == 'Linux'
+        for index in range(5):
+            device = f"/dev/video{index}" if is_linux else index
+            if is_linux:
+                cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
+                cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            else:
+                cap = cv2.VideoCapture(device)
+            time.sleep(1)
+            if cap.isOpened():
+                ret, frame = cap.read()
+                if ret:
+                    print(f"[INFO] Camera opened successfully: {device}")
+                    return cap
+            cap.release()
+        print("❌ No compatible camera found.")
+        return None
 
     def update_style_label(self, event=None):
         self.style_label.config(text=f"Chosen Style: {self.selected_style.get()}")
@@ -109,12 +120,10 @@ class PhotoGUI:
             if ret:
                 frame = cv2.resize(frame, (self.VIDEO_WIDTH, self.VIDEO_HEIGHT))
                 contour_frame = self.process_frame(frame.copy())
-                # Display normal
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 img = ImageTk.PhotoImage(Image.fromarray(rgb))
                 self.label_normal.imgtk = img
                 self.label_normal.config(image=img)
-                # Display contours
                 rgb_c = cv2.cvtColor(contour_frame, cv2.COLOR_BGR2RGB)
                 img_c = ImageTk.PhotoImage(Image.fromarray(rgb_c))
                 self.label_contours.imgtk = img_c
@@ -150,8 +159,8 @@ class PhotoGUI:
             return
         self.is_frozen = True
         frame = cv2.resize(frame, (self.VIDEO_WIDTH, self.VIDEO_HEIGHT))
+        self.frozen_frame = frame.copy()  # ✅ Store live photo
         contour_frame = self.process_frame(frame.copy())
-        # Display frozen
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = ImageTk.PhotoImage(Image.fromarray(rgb))
         self.label_normal.imgtk = img
@@ -160,21 +169,34 @@ class PhotoGUI:
         img_c = ImageTk.PhotoImage(Image.fromarray(rgb_c))
         self.label_contours.imgtk = img_c
         self.label_contours.config(image=img_c)
-        # Ask for confirmation
         self.countdown_label.config(text="Are You Happy\nWith Your Photo?", font=("Arial",20,"bold"))
         self.countdown_label.place(x=720, y=600, anchor="center")
         self.yes_button.place(x=650, y=650, anchor="center")
         self.no_button.place(x=790, y=650, anchor="center")
 
     def confirm_photo(self):
-        # Publish confirmation
+        # Publish the confirmation message
         self.publish_callback()
-        # Clear UI
+
+        # Save the frozen frame to the image_processing/test_images folder
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        # script_dir is .../robo_da_vinci/robo_da_vinci/gui
+        save_dir = os.path.normpath(
+            os.path.join(script_dir, '..', 'image_processing', 'test_images')
+        )
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, 'webcam_img.jpg')
+        if self.frozen_frame is not None:
+            cv2.imwrite(save_path, self.frozen_frame)
+            print(f"[INFO] Saved captured image to: {save_path}")
+        else:
+            print("[WARN] No frozen frame to save.")
+
+        # Reset the GUI and show processing progress
         self.countdown_label.place_forget()
         self.yes_button.place_forget()
         self.no_button.place_forget()
         self.button_take_photo.config(state=tk.NORMAL)
-        # Start progress
         self.show_progress()
 
     def retake_photo(self):
@@ -237,13 +259,11 @@ class PhotoPublisherNode(Node):
         self.pub.publish(msg)
         self.get_logger().info('Published photo_confirmed: True')
 
-
 def main(args=None):
     rclpy.init(args=args)
     node = PhotoPublisherNode()
-    thread = threading.Thread(target=rclpy.spin, args=(node,), daemon=True)
-    thread.start()
     node.gui.run()
+    rclpy.spin_once(node)
     node.destroy_node()
     rclpy.shutdown()
 

@@ -10,3 +10,13 @@
 .vscode/
 .idea/__pycache__/
 *.py[cod]
+build/
+install/
+log/
+*.pyc
+__pycache__/
+build/
+install/
+log/
+*.pyc
+__pycache__/

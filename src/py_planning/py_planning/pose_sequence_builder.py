@@ -1,6 +1,6 @@
 from geometry_msgs.msg import Pose, PoseArray
 from typing import List, Tuple
-from robo_da_vinci.lkh_utils import solve_stroke_order_py
+from py_planning.lkh_utils import solve_stroke_order_py
 
 class PoseSequenceBuilder:
     @staticmethod
