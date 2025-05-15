@@ -1,0 +1,46 @@
+# ROS2 related Python packages (make sure ROS2 environment is sourced)
+rclpy==3.3.12
+rosidl-runtime-py==0.9.3
+launch==1.0.5
+launch-ros==0.19.7
+ament-index-python==1.4.0
+ament-lint==0.12.10
+
+# Core dependencies
+numpy==1.26.4
+scipy==1.8.0
+matplotlib==3.5.1
+pandas==2.2.3
+shapely==2.0.7
+opencv-python==4.7.0.72   # (Add if you need cv-bridge alternatives or direct OpenCV)
+
+# For GUI and plotting
+PyQt5==5.15.6
+pyqtgraph==0.13.1         # Consider adding if you want a plotting widget
+
+# Image processing
+imageio==2.37.0
+potrace @ file:///home/william/ros2_ws/src/pypotrace  # keep editable local install
+
+# Additional useful packages
+loguru==0.7.3
+ipython==8.12.3
+
+# Development tools (optional, but helpful)
+autopep8==2.3.2
+flake8==4.0.1
+pre_commit==4.2.0
+
+# ROS2 message generation / control (optional - depends on your needs)
+control-msgs==4.4.0
+geometry-msgs==4.2.3
+sensor-msgs==4.2.3
+trajectory-msgs==4.2.3
+
+# Your own editable packages
+-e /home/william/ros2_ws/build/gui
+-e /home/william/ros2_ws/build/py_planning
+-e /home/william/ros2_ws/build/robo_da_vinci
+-e /home/william/ros2_ws/build/rs2_dmp_demo
+-e /home/william/ros2_ws/build/sjtu_drone_bringup
+-e /home/william/ros2_ws/build/sjtu_drone_control
