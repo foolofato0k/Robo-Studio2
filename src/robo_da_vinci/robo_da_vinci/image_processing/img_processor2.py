@@ -19,27 +19,27 @@ def detectFaceEdges(img):
 
     # Face detection
     faces = face_cascade.detectMultiScale(img, 1.3, 5)
-
-    if len(faces) == 0:
-        print("No Face Detected!")
-        return None, None
-    elif len(faces) > 3:
-        print("More than 3 Faces Detected!")
-        return None, None        
-
     # Get Region of Interest
     roi = img.copy()
     for (x,y,w,h) in faces:
         roi = roi[y:y+h, x:x+w]
+    
     roi = cv.resize(roi, (250, 250)) # resized to a standard size for canvas creation 
     
-    # EDGE DETECTION ______________________
-    # Add Gussian Blur and Detect Edges
-    img_blur = cv.GaussianBlur(roi, (3,3), 0)
-    edge_img = cv.Canny(image=img_blur, threshold1=50, threshold2=120) # Canny Edge Detection
 
-    clean_img = reduceNoise(edge_img)
-    return clean_img
+    # EDGE DETECTION ______________________
+    # Add Gussian Blur
+    img_blur = cv.GaussianBlur(roi, (3,3), 0)
+    # Detect Edges
+    edge_img = cv.Canny(image=img_blur, threshold1=20, threshold2=120) # Canny Edge Detection
+
+    # Try to clean image
+    kernel = np.ones((3, 3), np.uint8)
+    edge_img = cv.morphologyEx(edge_img, cv.MORPH_CLOSE, kernel)
+
+    edge_img = createPoster(edge_img) # without text
+
+    return edge_img
 
 def createPoster(img): # private function
         
@@ -64,46 +64,22 @@ def createPoster(img): # private function
 
         return canvas
 
-def groupEdges(img):
-
-    _, img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)
-    num_labels, labels_img = cv.connectedComponents(img) # get the groups
-
-    masks = []
-    
-    for label in range(1, num_labels):  # skip background
-        mask = (labels_img == label).astype(np.uint8)
-        masks.append(mask) # add group masks to array
-
-    return num_labels, masks
-
-def reduceNoise(img):
-
-    _, masks = groupEdges(img)
-    clean_img = np.zeros(img.shape, dtype=np.uint8)
-    
-
-    for mask in masks:
-        if cv.countNonZero(mask) >= 40:
-            clean_img[mask != 0] = 255
-            
-    # Apply Morphology kernal
-    kernel = np.ones((3, 3), np.uint8)
-    cleaned_img = cv.morphologyEx(clean_img, cv.MORPH_CLOSE, kernel)
-
-    return cleaned_img
-
 def getPaths(img):
 
-    ### OLD VERSION ---- 2172 strokes
-    _, masks = groupEdges(img)
+    ### OLD VERSION of contour generation - publishes 1872 strokes
+    img = cv.threshold(img, 127, 255, cv.THRESH_BINARY)[1] # convert to black and white - with one chanel
+    num_labels, labels_img = cv.connectedComponents(img) # get the groups
     paths = []
-    for mask in masks:
-        bitmap = potrace.Bitmap(mask.astype(bool))
-        path = bitmap.trace()
-        paths.append(path)
-    
-    ### NEW VERSION ---- 2082 strokes (but the eyes are missing)
+    for label in range(num_labels):
+        if label == 0: # first label is the background
+            continue
+        else:
+            mask = (labels_img == label).astype(np.uint8) 
+            bitmap = potrace.Bitmap(mask.astype(bool))
+            path = bitmap.trace()
+            paths.append(path)
+
+    ### NEW VERSION of contour generation - publishes 1762 strokes
     #contours, _ = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     #paths = []
     #for cnt in contours:
@@ -112,31 +88,8 @@ def getPaths(img):
     #    bitmap = potrace.Bitmap(mask.astype(bool))
     #    path = bitmap.trace()
     #    paths.append(path)
-
+    
     return paths
-
-def tesselate(curves, distance_threshold=40.0):
-
-    stroke_plan = []
-    for path in curves:
-        for curve in path:
-            curve_verts = curve.tesselate()
-            if len(curve_verts) < 40:
-                continue
-
-            current_stroke = [curve_verts[0]]
-
-            for i in range(1, len(curve_verts)):
-                prev = np.array(curve_verts[i-1])
-                curr = np.array(curve_verts[i])
-                if np.linalg.norm(curr - prev) > distance_threshold:
-                    stroke_plan.append(current_stroke)
-                    current_stroke = []
-                current_stroke.append(tuple(curr))
-            if current_stroke:
-                stroke_plan.append(current_stroke)
-
-    return stroke_plan
 
 def WebcamImg(image):
 
@@ -159,7 +112,30 @@ def WebcamImg(image):
 
     return image
 
-#####################################################################
+
+    
+def tesselate(curves, distance_threshold=40.0):
+    stroke_plan = []
+    for path in curves:
+        for curve in path:
+            curve_verts = curve.tesselate()
+            if len(curve_verts) < 25:
+                continue
+
+            current_stroke = [curve_verts[0]]
+
+            for i in range(1, len(curve_verts)):
+                prev = np.array(curve_verts[i-1])
+                curr = np.array(curve_verts[i])
+                if np.linalg.norm(curr - prev) > distance_threshold:
+                    stroke_plan.append(current_stroke)
+                    current_stroke = []
+                current_stroke.append(tuple(curr))
+            if current_stroke:
+                stroke_plan.append(current_stroke)
+    return stroke_plan
+
+
 if __name__ == '__main__':
      
     image = None
@@ -172,18 +148,11 @@ if __name__ == '__main__':
             
     else:
         script_dir = os.path.dirname(os.path.realpath(__file__))
-        image_path = os.path.abspath(os.path.join(
-                    script_dir,
-                    '..', '..','..',                       # go up into src
-                    'gui',
-                    'image_processing',
-                    'test_images',
-                    'webcam_img.jpg'
-                ))
+        image_path = os.path.join(script_dir, 'test_images', 'webcam_img.jpg')
         image = cv.imread(image_path)
     
     if image is None:
-        print(f"Failed to load image. Check the path: {image_path}")
+        print("Failed to load image. Check the path: test_images/webcam_img.jpg")
         exit()
 
     # PROCESSING EDGES ________________________________________
@@ -205,12 +174,7 @@ if __name__ == '__main__':
     for path in paths:
         for curve in path:
             curve_verts = curve.tesselate()
-            if len(curve_verts) < 25:
-                continue
-
             x, y = zip(*curve_verts)
             ax.scatter(x, y, marker='o', s=2, label=f'Group {i}')
         i += 1
-    
-    print(f"paths: {i}")
     plt.show()

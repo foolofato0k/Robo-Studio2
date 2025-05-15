@@ -24,7 +24,7 @@ class ProcessingNode(Node):
 
         # Loop variables
         # only start processing after we receive True
-        self.photo_confirmed = True   
+        self.photo_confirmed = True  
 
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data
@@ -48,7 +48,8 @@ class ProcessingNode(Node):
                 script_dir = os.path.dirname(os.path.realpath(__file__))            # …/robo_da_vinci/py_planning
                 image_path = os.path.abspath(os.path.join(
                     script_dir,
-                    '..',                       # go up into robo_da_vinci/robo_da_vinci
+                    '..', '..',                       # go up into src
+                    'gui',
                     'image_processing',
                     'test_images',
                     'webcam_img.jpg'
@@ -65,10 +66,10 @@ class ProcessingNode(Node):
 
             #optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
             #opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.3))
-            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.3))
+            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.32))
 
 
-            unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path,0.2,0.15)
+            unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path,0.2,0.1565)
             #optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path)
 
 
