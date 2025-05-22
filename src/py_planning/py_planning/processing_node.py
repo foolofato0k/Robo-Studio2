@@ -64,13 +64,13 @@ class ProcessingNode(Node):
             paths = getPaths(poster)
             image_paths = tesselate(paths)
 
-            #optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
-            #opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.3))
-            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.32))
+            optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
+            opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.35))
+            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.35))
 
 
             unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path,0.2,0.1565)
-            #optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path)
+            optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path)
 
 
             # # CONSTRUCT PATH PLANNER
@@ -79,14 +79,11 @@ class ProcessingNode(Node):
             # # SCALE TO A4 SIZE AND CENTER AT (0, 0.25)
             # pose_builder.scale_and_center(0.297,0.210,(0.1,0.3))
             
-
-            # # PLAN PATH
-            # stroke_plan = pose_builder.build_pose_array(0.2, 0.18)
             
             # Plot poses in 3D
             if(True):
                 plot_3d_points(unoptimised_stroke_plan.poses)
-                #plot_3d_points(optimised_stroke_plan.poses)
+                plot_3d_points(optimised_stroke_plan.poses)
 
             # Keep only the first 10 poses TESTING PURPOSES
             #stroke_plan.poses = stroke_plan.poses[:500]
