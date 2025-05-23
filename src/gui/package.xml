@@ -6,24 +6,15 @@
   <maintainer email="jesse.gonzalez@student.uts.edu.au">jesse</maintainer>
   <license>Apache-2.0</license>
 
-   <!-- 1) Python builder -->
+  <!-- build tool -->
   <buildtool_depend>ament_python</buildtool_depend>
 
-  <!-- 2) Runtime dependencies -->
+  <!-- runtime dependencies -->
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>geometry_msgs</depend>
-  <!-- add any others you import in your nodes -->
-
-  <!-- (Optional) Test dependencies if you have tests -->
-  <!--
-  <test_depend>ament_copyright</test_depend>
-  <test_depend>ament_flake8</test_depend>
-  <test_depend>ament_pep257</test_depend>
-  <test_depend>python3-pytest</test_depend>
-  -->
 
   <export>
     <build_type>ament_python</build_type>
