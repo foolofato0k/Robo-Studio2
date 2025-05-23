@@ -245,7 +245,7 @@ class PhotoGUI:
         self._prog_inc = 100.0 / steps
 
         # init bar + labels
-        self.progress_label.config(text="Processing Image...")
+        self.progress_label.config(text="Processing Image And Path Planning")
         self.progress_label.place(x=720, y=660, anchor="center")
         self.progress_bar['value'] = 0
         self.progress_bar.place(x=720, y=700, anchor="center")
