@@ -41,5 +41,3 @@ ros2 launch gui bringup.launch.py
 For full documentation, tutorials and tests check the following page to see a full outline of the project
 
 Wiki Home: https://github.com/foolofato0k/Robo-Studio2/wiki
-
-Issue tracker: https://github.com/Jesse-G0nzalez/Robo-Da-Vinci/issues
