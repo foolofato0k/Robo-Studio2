@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 
 package_name = 'gui'
 
@@ -11,9 +12,11 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, [
             'package.xml',
-            'haarcascade_frontalface_default.xml'
+            'haarcascade_frontalface_default.xml',
         ]),
+        ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
     ],
+
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='jesse',
@@ -21,9 +24,10 @@ setup(
     description='Camera GUI + photo_publisher node',
     license='TODO: License declaration',
     tests_require=['pytest'],
+
     entry_points={
         'console_scripts': [
-            'gui_node = gui.gui_node:main'
+            'gui_node = gui.gui_node:main',
         ],
     },
 )
