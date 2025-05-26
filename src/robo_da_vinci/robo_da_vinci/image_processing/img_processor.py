@@ -126,16 +126,16 @@ def tesselate(curves, distance_threshold=40.0):
 
             current_stroke = [curve_verts[0]]
 
-            for i in range(1, len(curve_verts)):
-                prev = np.array(curve_verts[i-1])
-                curr = np.array(curve_verts[i])
-                if np.linalg.norm(curr - prev) > distance_threshold:
-                    stroke_plan.append(current_stroke)
-                    current_stroke = []
-                current_stroke.append(tuple(curr))
+            for i in range(1, len(curve_verts)-2):
+                if i % 2 != 0:
+                    prev = np.array(curve_verts[i-1])
+                    curr = np.array(curve_verts[i+2])
+                    if np.linalg.norm(curr - prev) > distance_threshold:
+                        stroke_plan.append(current_stroke)
+                        current_stroke = []
+                    current_stroke.append(tuple(curr))
             if current_stroke:
                 stroke_plan.append(current_stroke)
-
     return stroke_plan
 
 def WebcamImg(image):
@@ -176,8 +176,8 @@ if __name__ == '__main__':
                     script_dir,
                     '..', '..','..',                       # go up into src
                     'gui',
-                    'image_processing',
-                    'test_images',
+                    'gui',
+                    'capture_image',
                     'webcam_img.jpg'
                 ))
         image = cv.imread(image_path)

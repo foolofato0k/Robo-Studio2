@@ -24,7 +24,7 @@ class ProcessingNode(Node):
 
         # Loop variables
         # only start processing after we receive True
-        self.photo_confirmed = False   
+        self.photo_confirmed = True   
 
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data
@@ -51,7 +51,7 @@ class ProcessingNode(Node):
                     '..',                       # go up into robo_da_vinci/robo_da_vinci
                     'image_processing',
                     'test_images',
-                    'webcam_img.jpg'
+                    'webcam_img2.jpg'
                 ))
                 image = cv.imread(image_path)
                 if image is None:
