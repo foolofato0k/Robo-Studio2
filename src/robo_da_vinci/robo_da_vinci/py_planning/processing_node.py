@@ -1,7 +1,7 @@
 from robo_da_vinci.py_planning.pose_sequence_builder import PoseSequenceBuilder
 from robo_da_vinci.py_planning.visual_testing.visual_utils import plot_3d_points
 from robo_da_vinci.image_processing.img_processor import (
-    WebcamImg, detectFaceEdges, getPaths, tesselate
+    WebcamImg, detectFaceEdges, createPoster, getPaths, tesselate
 )
 
 import rclpy
@@ -25,6 +25,9 @@ class ProcessingNode(Node):
         # Loop variables
         # only start processing after we receive True
         self.photo_confirmed = True   
+        
+        # only create wanted poster if we receive True
+        self.wanted_bool = True
 
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data
@@ -51,7 +54,7 @@ class ProcessingNode(Node):
                     '..',                       # go up into robo_da_vinci/robo_da_vinci
                     'image_processing',
                     'test_images',
-                    'webcam_img2.jpg'
+                    'webcam_img.jpg'
                 ))
                 image = cv.imread(image_path)
                 if image is None:
@@ -60,6 +63,9 @@ class ProcessingNode(Node):
 
             # PROCESSING EDGES ________________________________________
             poster = detectFaceEdges(image)
+            if self.wanted_bool:
+                poster = createPoster(poster)
+
             paths = getPaths(poster)
             image_paths = tesselate(paths)
 

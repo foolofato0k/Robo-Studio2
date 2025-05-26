@@ -44,23 +44,28 @@ def detectFaceEdges(img):
 def createPoster(img): # private function
         
         canvas = np.zeros((400,400),dtype=np.uint8) # create poster
-        canvas[75:325, 75:325] = img
-        cv.rectangle(canvas,(75,75),(325,325),color=255,thickness=1, lineType=cv.LINE_AA)
+        #cv.rectangle(canvas,(75,75),(325,325),color=255,thickness=1, lineType=cv.LINE_AA)
 
         # ADD TEXT_______________________________
-        #Heading = 'WANTED'
-        #subtext1 = 'DEAD OR ALIVE'
-        #subtext2 = '$10'
-        #font_large = 4 # Scale text relative to canvas size
-        #font_small = font_large * 0.5  # Smaller text
-#
-        #heading_pos = (80, 60)  # Top part
-        #subtext1_pos = (80, 360)  # Bottom part
-        #subtext2_pos = (160, 395)  # Near the bottom center
-#
-        #canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_large, color=255, thickness=1, lineType=cv.LINE_AA)
-        #canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
-        #canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
+        Heading = 'WANTED'
+        subtext1 = 'DEAD OR ALIVE'
+        subtext2 = '$10'
+        font_large = 2 # Scale text relative to canvas size
+        font_small = font_large * 0.5  # Smaller text
+
+        heading_pos = (80, 60)  # Top part
+        subtext1_pos = (85, 360)  # Bottom part
+        subtext2_pos = (160, 395)  # Near the bottom center
+
+        canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_large, color=255, lineType=cv.LINE_AA)
+        canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_small, color=255, lineType=cv.LINE_AA)
+        canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_small, color=255, lineType=cv.LINE_AA)
+
+        # Clean up text for processing
+        kernel = np.ones((5, 5), np.uint8)
+        canvas = cv.morphologyEx(canvas, cv.MORPH_CLOSE, kernel)
+
+        canvas[75:325, 75:325] = img # add processed face image to poster
 
         return canvas
 
@@ -87,7 +92,7 @@ def reduceNoise(img):
         if cv.countNonZero(mask) >= 40:
             clean_img[mask != 0] = 255
             
-    # Apply Morphology kernal
+    # Apply Morphology kernel
     kernel = np.ones((3, 3), np.uint8)
     cleaned_img = cv.morphologyEx(clean_img, cv.MORPH_CLOSE, kernel)
 
@@ -121,7 +126,7 @@ def tesselate(curves, distance_threshold=40.0):
     for path in curves:
         for curve in path:
             curve_verts = curve.tesselate()
-            if len(curve_verts) < 40:
+            if len(curve_verts) < 10:
                 continue
 
             current_stroke = [curve_verts[0]]
@@ -174,10 +179,9 @@ if __name__ == '__main__':
         script_dir = os.path.dirname(os.path.realpath(__file__))
         image_path = os.path.abspath(os.path.join(
                     script_dir,
-                    '..', '..','..',                       # go up into src
-                    'gui',
-                    'gui',
-                    'capture_image',
+                   '..',                       # go up into robo_da_vinci/robo_da_vinci
+                    'image_processing',
+                    'test_images',
                     'webcam_img.jpg'
                 ))
         image = cv.imread(image_path)
@@ -188,6 +192,7 @@ if __name__ == '__main__':
 
     # PROCESSING EDGES ________________________________________
     poster = detectFaceEdges(image)
+    poster = createPoster(poster)
     paths = getPaths(poster)
 
     # SHOWING OUTPUTS _________________________________________
@@ -205,7 +210,7 @@ if __name__ == '__main__':
     for path in paths:
         for curve in path:
             curve_verts = curve.tesselate()
-            if len(curve_verts) < 25:
+            if len(curve_verts) < 10:
                 continue
 
             x, y = zip(*curve_verts)

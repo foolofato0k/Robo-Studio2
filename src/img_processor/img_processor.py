@@ -38,31 +38,37 @@ def detectFaceEdges(img):
     img_blur = cv.GaussianBlur(roi, (3,3), 0)
     edge_img = cv.Canny(image=img_blur, threshold1=50, threshold2=120) # Canny Edge Detection
 
+    # NOISE REDUCTION _________________________
     clean_img = reduceNoise(edge_img)
+    
     return clean_img
 
 def createPoster(img): # private function
         
-        canvas = np.zeros((400,400),dtype=np.uint8) # create poster
-        canvas[75:325, 75:325] = img
-        cv.rectangle(canvas,(75,75),(325,325),color=255,thickness=1, lineType=cv.LINE_AA)
+    canvas = np.zeros((400,400),dtype=np.uint8) # create poster
 
-        # ADD TEXT_______________________________
-        #Heading = 'WANTED'
-        #subtext1 = 'DEAD OR ALIVE'
-        #subtext2 = '$10'
-        #font_large = 4 # Scale text relative to canvas size
-        #font_small = font_large * 0.5  # Smaller text
-#
-        #heading_pos = (80, 60)  # Top part
-        #subtext1_pos = (80, 360)  # Bottom part
-        #subtext2_pos = (160, 395)  # Near the bottom center
-#
-        #canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_large, color=255, thickness=1, lineType=cv.LINE_AA)
-        #canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
-        #canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_PLAIN, fontScale=font_small, color=255, thickness=1, lineType=cv.LINE_AA)
+    # ADD TEXT_______________________________
+    Heading = 'WANTED'
+    subtext1 = 'DEAD OR ALIVE'
+    subtext2 = '$10'
+    font_large = 2 # Scale text relative to canvas size
+    font_small = font_large * 0.5  # Smaller text
 
-        return canvas
+    heading_pos = (80, 60)  # Top part
+    subtext1_pos = (85, 360)  # Bottom part
+    subtext2_pos = (160, 395)  # Near the bottom center
+
+    canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_large, color=255, lineType=cv.LINE_AA)
+    canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_small, color=255, lineType=cv.LINE_AA)
+    canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_small, color=255, lineType=cv.LINE_AA)
+
+    # Clean up text for processing
+    kernel = np.ones((5, 5), np.uint8)
+    canvas = cv.morphologyEx(canvas, cv.MORPH_CLOSE, kernel)
+
+    canvas[75:325, 75:325] = img # add processed face image to poster
+    
+    return canvas
 
 def groupEdges(img):
 
@@ -121,7 +127,7 @@ def tesselate(curves, distance_threshold=40.0):
     for path in curves:
         for curve in path:
             curve_verts = curve.tesselate()
-            if len(curve_verts) < 40:
+            if len(curve_verts) < 10:
                 continue
 
             current_stroke = [curve_verts[0]]
@@ -138,56 +144,25 @@ def tesselate(curves, distance_threshold=40.0):
                 stroke_plan.append(current_stroke)
     return stroke_plan
 
-def WebcamImg(image):
-
-    cap = cv.VideoCapture(0)
-    if not cap.isOpened():
-        print("Cannot open camera")
-        exit()
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Can't receive frame. Exiting ...")
-            break
-
-        cv.imshow('frame', frame)
-        if cv.waitKey(1) == ord('s'):
-            image = frame
-            break
-    cap.release()
-
-    return image
-
 #####################################################################
 if __name__ == '__main__':
      
     image = None
-     
-    webcam = False
-    if webcam:
-        image = WebcamImg(image)
-        if image == None:
-            exit()
-            
-    else:
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        image_path = os.path.abspath(os.path.join(
-                    script_dir,
-                    '..',                       # go up into src
-                    'gui',
-                    'gui',
-                    'capture_image',
-                    'webcam_img.jpg'
-                ))
-        image = cv.imread(image_path)
-    
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    image_path = os.path.abspath(os.path.join(
+                script_dir,
+                'testing_images',                       # images to demonstrate
+                'webcam_img.jpg'
+            ))
+    image = cv.imread(image_path)
+
     if image is None:
         print(f"Failed to load image. Check the path: {image_path}")
         exit()
 
     # PROCESSING EDGES ________________________________________
     poster = detectFaceEdges(image)
+    poster = createPoster(poster)
     paths = getPaths(poster)
 
     # SHOWING OUTPUTS _________________________________________
@@ -205,7 +180,7 @@ if __name__ == '__main__':
     for path in paths:
         for curve in path:
             curve_verts = curve.tesselate()
-            if len(curve_verts) < 25:
+            if len(curve_verts) < 10:
                 continue
 
             x, y = zip(*curve_verts)
