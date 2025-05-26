@@ -60,6 +60,7 @@ def createPoster(img): # private function
         canvas = cv.putText(canvas, Heading, org=heading_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_large, color=255, lineType=cv.LINE_AA)
         canvas = cv.putText(canvas, subtext1, org=subtext1_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_small, color=255, lineType=cv.LINE_AA)
         canvas = cv.putText(canvas, subtext2, org=subtext2_pos, fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=font_small, color=255, lineType=cv.LINE_AA)
+        canvas = cv.flip(canvas,1)
 
         # Clean up text for processing
         kernel = np.ones((5, 5), np.uint8)
@@ -126,7 +127,7 @@ def tesselate(curves, distance_threshold=40.0):
     for path in curves:
         for curve in path:
             curve_verts = curve.tesselate()
-            if len(curve_verts) < 10:
+            if len(curve_verts) < 25:
                 continue
 
             current_stroke = [curve_verts[0]]

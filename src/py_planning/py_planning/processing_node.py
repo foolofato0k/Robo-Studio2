@@ -27,7 +27,7 @@ class ProcessingNode(Node):
         self.photo_confirmed = False
 
         # only create wanted poster if we receive True
-        self.wanted_bool = False  
+        self.wanted_bool = True  
 
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data

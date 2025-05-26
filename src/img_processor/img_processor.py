@@ -144,6 +144,27 @@ def tesselate(curves, distance_threshold=40.0):
                 stroke_plan.append(current_stroke)
     return stroke_plan
 
+def WebcamImg(image):
+
+    cap = cv.VideoCapture(0)
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Can't receive frame. Exiting ...")
+            break
+
+        cv.imshow('frame', frame)
+        if cv.waitKey(1) == ord('s'):
+            image = frame
+            break
+    cap.release()
+
+    return image
+
 #####################################################################
 if __name__ == '__main__':
      
