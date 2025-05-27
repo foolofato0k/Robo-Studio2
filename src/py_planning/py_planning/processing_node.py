@@ -26,6 +26,8 @@ class ProcessingNode(Node):
         # only start processing after we receive True
         self.photo_confirmed = False  
 
+        self.wanted_confirmed = True
+
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data
         self.get_logger().info(f"Photo confirmed: {self.photo_confirmed}")
@@ -61,7 +63,8 @@ class ProcessingNode(Node):
 
             # PROCESSING EDGES ________________________________________
             poster = detectFaceEdges(image)
-            poster = createPoster(poster)
+            if self.wanted_confirmed:
+                poster = createPoster(poster)
             paths = getPaths(poster)
             image_paths = tesselate(paths)
 
