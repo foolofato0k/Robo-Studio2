@@ -25,9 +25,6 @@ class ProcessingNode(Node):
         # Loop variables
         # only start processing after we receive True
         self.photo_confirmed = True   
-        
-        # only create wanted poster if we receive True
-        self.wanted_bool = True
 
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data
@@ -63,9 +60,6 @@ class ProcessingNode(Node):
 
             # PROCESSING EDGES ________________________________________
             poster = detectFaceEdges(image)
-            if self.wanted_bool:
-                poster = createPoster(poster)
-
             paths = getPaths(poster)
             image_paths = tesselate(paths)
 

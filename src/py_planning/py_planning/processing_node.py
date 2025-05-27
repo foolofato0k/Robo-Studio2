@@ -24,10 +24,7 @@ class ProcessingNode(Node):
 
         # Loop variables
         # only start processing after we receive True
-        self.photo_confirmed = False
-
-        # only create wanted poster if we receive True
-        self.wanted_bool = True  
+        self.photo_confirmed = False  
 
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data
@@ -64,18 +61,17 @@ class ProcessingNode(Node):
 
             # PROCESSING EDGES ________________________________________
             poster = detectFaceEdges(image)
-            if self.wanted_bool:
-                poster = createPoster(poster)
+            poster = createPoster(poster)
             paths = getPaths(poster)
             image_paths = tesselate(paths)
 
-            # optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
-            # opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.35))
-            unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.35))
+            optimised_path = PoseSequenceBuilder.optimise_path(image_paths)
+            opt_scaled_path = PoseSequenceBuilder.scale_and_center(optimised_path,0.297,0.210,(0.1,0.35))
+            # unopt_scaled_path = PoseSequenceBuilder.scale_and_center(image_paths,0.297,0.210,(0.1,0.35))
 
 
-            unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path,0.2,0.1565)
-            # optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path)
+            # unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path,0.2,0.1569)
+            optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path, 0.2,0.1569)
 
 
             # # CONSTRUCT PATH PLANNER
@@ -90,8 +86,8 @@ class ProcessingNode(Node):
 
             # pose_builder.print_pose_array(stroke_plan)
             # PUBLISH PATH
-            self.publisher_.publish(unoptimised_stroke_plan)
-            self.get_logger().info(f'Published {len(unoptimised_stroke_plan._poses)} strokes')
+            self.publisher_.publish(optimised_stroke_plan)
+            self.get_logger().info(f'Published {len(optimised_stroke_plan._poses)} strokes')
 
 
             # reset until next confirmation
@@ -99,7 +95,7 @@ class ProcessingNode(Node):
             
             # Plot poses in 3D
             if(True):
-                plot_3d_points(unoptimised_stroke_plan.poses)
+                plot_3d_points(optimised_stroke_plan.poses)
                 # plot_3d_points(optimised_stroke_plan.poses)
 
 

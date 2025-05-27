@@ -285,7 +285,7 @@ class PhotoGUI:
     def display_pipeline(self, frame, delay_ms=1500, style="default"):
         # detect face for ROI
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+        faces = self.face_cascade.detectMultiScale(gray, 1.1, 5)
         if len(faces):
             x,y,w,h = faces[0]
         else:

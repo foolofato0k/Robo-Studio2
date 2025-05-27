@@ -76,7 +76,7 @@ void UR3Control::delayedInit()
         
         // Set motion planning parameters
         move_group_->setPlanningTime(10.0);                     // Allow up to 10 seconds for planning
-        move_group_->setMaxVelocityScalingFactor(0.08);          // 10% of max joint velocity
+        move_group_->setMaxVelocityScalingFactor(0.06);          // 10% of max joint velocity
         move_group_->setMaxAccelerationScalingFactor(0.1);      // 10% of max joint acceleration
 
         // Destroy the timer after one-time use
