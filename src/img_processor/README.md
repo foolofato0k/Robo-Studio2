@@ -5,7 +5,6 @@ This folder only serves to show the subsystem's progress in development under ar
 
 ## Subsystem Tests
 The **test_imgProcessor** folder includes:
-- Small dataset of 8 images to test on (permission to use given by participants)
 - TESTS.ipynb file of the tests. - Running instructions are found in the file
 
 ## Requirements

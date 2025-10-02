@@ -18,7 +18,7 @@ def detectFaceEdges(img):
         raise ValueError("Haar cascade file could not be loaded.")
 
     # Face detection
-    faces = face_cascade.detectMultiScale(img, 1.1, 5)
+    faces = face_cascade.detectMultiScale(img, 1.3, 5)
 
     if len(faces) == 0:
         print("No Face Detected!")

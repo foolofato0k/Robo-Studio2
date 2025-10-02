@@ -26,7 +26,7 @@ class ProcessingNode(Node):
         # only start processing after we receive True
         self.photo_confirmed = False  
 
-        self.wanted_confirmed = True
+        self.wanted_confirmed = False
 
     def photo_confirmed_callback(self, msg: Bool):
         self.photo_confirmed = msg.data
@@ -63,7 +63,7 @@ class ProcessingNode(Node):
 
             # PROCESSING EDGES ________________________________________
             poster = detectFaceEdges(image)
-            if self.wanted_confirmed:
+            if True:
                 poster = createPoster(poster)
             paths = getPaths(poster)
             image_paths = tesselate(paths)
@@ -74,7 +74,7 @@ class ProcessingNode(Node):
 
 
             # unoptimised_stroke_plan = PoseSequenceBuilder.build_pose_array(unopt_scaled_path,0.2,0.1569)
-            optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path, 0.2,0.1569)
+            optimised_stroke_plan = PoseSequenceBuilder.build_pose_array(opt_scaled_path, 0.2,0.1576)
 
 
             # # CONSTRUCT PATH PLANNER
